@@ -88,13 +88,14 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
     const supabase = createClient()
     const urls: string[] = []
     for (const f of Array.from(files)) {
-      const key = `${folder}/${Date.now()}-${f.name}`
-      const { data, error } = await supabase.storage.from('public').upload(key, f)
+      const key = `${Date.now()}-${f.name}`
+      const { data, error } = await supabase.storage.from('bands').upload(key, f)
       if (error) {
         console.error('Upload error', error)
+        alert(`Upload failed: ${error.message}`)
         continue
       }
-      const { data: urlData } = supabase.storage.from('public').getPublicUrl(data.path)
+      const { data: urlData } = supabase.storage.from('bands').getPublicUrl(data.path)
       urls.push(urlData.publicUrl)
     }
     setUploading(false)

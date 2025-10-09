@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Band Upload</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Band Upload</h1>
+    
+    <form id="bandForm">
+        <div>
+            <label>Band Name:</label>
+            <input type="text" id="bandName" value="Test Band" required>
+        </div>
+        
+        <div>
+            <label>Bio:</label>
+            <textarea id="bio" required>This is a test band for debugging purposes.</textarea>
+        </div>
+        
+        <div>
+            <label>Photo:</label>
+            <input type="file" id="photo" accept="image/*">
+        </div>
+        
+        <div>
+            <label>Audio Sample:</label>
+            <input type="file" id="audio" accept="audio/*">
+        </div>
+        
+        <button type="submit">Create Band</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        // Replace with your actual Supabase credentials
+        const SUPABASE_URL = 'https://jkylaqqajdjxpvrmuxfr.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpreWxhcXFhamRqeHB2cm11eGZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5ODc3NjUsImV4cCI6MjA3NTU2Mzc2NX0.guEyAis_t9I9Ul2uWB0FEI7HbH95d0FsE3bGYBfOxLs'
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        document.getElementById('bandForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            
+            const resultDiv = document.getElementById('result')
+            resultDiv.innerHTML = 'Processing...'
+            
+            try {
+                const bandName = document.getElementById('bandName').value
+                const bio = document.getElementById('bio').value
+                const photoFile = document.getElementById('photo').files[0]
+                const audioFile = document.getElementById('audio').files[0]
+                
+                let photoUrl = ''
+                let audioUrl = ''
+                
+                // Upload photo if provided
+                if (photoFile) {
+                    const photoKey = `${Date.now()}-${photoFile.name}`
+                    const { data: photoData, error: photoError } = await supabase.storage
+                        .from('bands')
+                        .upload(photoKey, photoFile)
+                    
+                    if (photoError) {
+                        throw new Error(`Photo upload failed: ${photoError.message}`)
+                    }
+                    
+                    const { data: photoUrlData } = supabase.storage
+                        .from('bands')
+                        .getPublicUrl(photoData.path)
+                    
+                    photoUrl = photoUrlData.publicUrl
+                }
+                
+                // Upload audio if provided
+                if (audioFile) {
+                    const audioKey = `${Date.now()}-${audioFile.name}`
+                    const { data: audioData, error: audioError } = await supabase.storage
+                        .from('bands')
+                        .upload(audioKey, audioFile)
+                    
+                    if (audioError) {
+                        throw new Error(`Audio upload failed: ${audioError.message}`)
+                    }
+                    
+                    const { data: audioUrlData } = supabase.storage
+                        .from('bands')
+                        .getPublicUrl(audioData.path)
+                    
+                    audioUrl = audioUrlData.publicUrl
+                }
+                
+                // Send data to Edge Function
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/onboarding-band`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        bandName,
+                        bio,
+                        genre: ['Rock'],
+                        location: 'Austin, TX',
+                        photos: photoUrl ? [photoUrl] : [],
+                        audioSamples: audioUrl ? [audioUrl] : []
+                    })
+                })
+                
+                const result = await response.json()
+                
+                console.log('Response status:', response.status)
+                console.log('Response body:', result)
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div style="color: green;">Success! Band created with ID: ${result.userId}</div>`
+                } else {
+                    resultDiv.innerHTML = `<div style="color: red;">Error (${response.status}): ${result.error || JSON.stringify(result)}</div>`
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`
+            }
+        })
+    </script>
+</body>
+</html>

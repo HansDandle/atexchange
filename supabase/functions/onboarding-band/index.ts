@@ -1,107 +1,116 @@
 import { serve } from 'https://deno.land/std@0.201.0/http/server.ts'
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-// Read env vars with fallbacks because the CLI forbids secret names starting with "SUPABASE_"
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || Deno.env.get('PROJECT_URL') || ''
-const SUPABASE_SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SERVICE_ROLE_KEY') || ''
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
+const SUPABASE_SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
-  console.error('Supabase env vars not set: SUPABASE_URL/PROJECT_URL or SERVICE_ROLE_KEY missing')
+  console.error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
 
 serve(async (req: Request) => {
+  // CORS headers for all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
+
   try {
+    console.log('Function called with method:', req.method)
+    console.log('Environment check - URL exists:', !!SUPABASE_URL, 'Service role exists:', !!SUPABASE_SERVICE_ROLE)
+    
+    // Handle preflight OPTIONS request
     if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
+      return new Response(null, { status: 204, headers: corsHeaders })
     }
 
-    const body = await req.json()
-
-    // Expecting fields similar to band_profiles
-    const {
-      bandName, bio, genre, location, website, spotifyUrl, youtubeUrl,
-      instagramUrl, facebookUrl, photos, audioSamples, techRider, minFee, maxFee
-    } = body
-
-    // Get user via supabase auth header if provided (recommended: send supabase auth cookie/token)
-    // For Edge Functions running with service role, we can accept a supabase user id in the body for upsert
-    const supabaseId = body.supabaseId || null
-
-    const payload = {
-      bandName,
-      bio,
-      genre,
-      location,
-      website,
-      spotifyUrl,
-      youtubeUrl,
-      instagramUrl,
-      facebookUrl,
-      photos,
-      audioSamples,
-      techRider,
-      minFee,
-      maxFee,
-      // map other fields as needed
-    }
-
-    // If supabaseId is provided, try to find user id
-    let userId = null
-    if (supabaseId) {
-      const { data: users } = await supabase.from('users').select('id').eq('supabaseId', supabaseId).limit(1)
-      if (users && users.length > 0) userId = users[0].id
-    }
-
-    // If userId is present, upsert band_profiles for that user
-    if (userId) {
-      const upsertPayload = { ...payload, userId }
-      const { error } = await supabase.from('band_profiles').upsert(upsertPayload, { onConflict: 'userId' })
-      if (error) throw error
-      return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Otherwise, insert a placeholder user (not ideal) - recommend client sends supabaseId
-    const { data: newUser, error: userErr } = await supabase.from('users').insert({ email: body.email || null, name: body.name || null, role: 'BAND', supabaseId: supabaseId }).select('id').limit(1)
-    if (userErr) throw userErr
-    const newUserId = newUser && newUser[0] && newUser[0].id
-    if (!newUserId) throw new Error('Failed to create user')
-
-    const { error: bpErr } = await supabase.from('band_profiles').insert({ ...payload, userId: newUserId })
-    if (bpErr) throw bpErr
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+    const body = await req.json()
+    console.log('Received band onboarding data:', { 
+      bandName: body.bandName, 
+      bio: body.bio?.substring(0, 50) + '...', 
+      photosCount: body.photos?.length || 0, 
+      audioCount: body.audioSamples?.length || 0 
     })
+
+    // Validate required fields
+    if (!body.bandName || !body.bio) {
+      return new Response(JSON.stringify({ error: 'Missing required fields: bandName, bio' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Simple approach: Create a placeholder user and band profile
+    console.log('Creating band profile for:', body.bandName)
+    
+    // Create user first
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert({ 
+        email: body.email || `${body.bandName.toLowerCase().replace(/\s+/g, '')}@example.com`, 
+        name: body.bandName, 
+        role: 'BAND', 
+        supabaseId: `band_${Date.now()}` 
+      })
+      .select('id')
+      .single()
+    
+    if (userError) {
+      console.error('User creation error:', userError)
+      throw new Error(`Failed to create user: ${userError.message}`)
+    }
+
+    console.log('User created with ID:', newUser.id)
+
+    // Create band profile
+    const bandData = {
+      userId: newUser.id,
+      bandName: body.bandName,
+      bio: body.bio,
+      genre: body.genre || [],
+      location: body.location || '',
+      website: body.website || '',
+      spotifyUrl: body.spotifyUrl || '',
+      youtubeUrl: body.youtubeUrl || '',
+      instagramUrl: body.instagramUrl || '',
+      facebookUrl: body.facebookUrl || '',
+      photos: body.photos || [],
+      audioSamples: body.audioSamples || [],
+      techRider: body.techRider || '',
+      minFee: body.minFee ? parseInt(body.minFee) : null,
+      maxFee: body.maxFee ? parseInt(body.maxFee) : null,
+    }
+
+    const { error: bandError } = await supabase
+      .from('band_profiles')
+      .insert(bandData)
+
+    if (bandError) {
+      console.error('Band profile creation error:', bandError)
+      throw new Error(`Failed to create band profile: ${bandError.message}`)
+    }
+
+    console.log('Successfully created band profile for user:', newUser.id)
+    return new Response(JSON.stringify({ success: true, userId: newUser.id }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
   } catch (err) {
-    console.error(err)
+    console.error('Band onboarding error:', err)
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 })

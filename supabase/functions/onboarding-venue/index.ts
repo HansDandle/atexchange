@@ -11,73 +11,107 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
 
 serve(async (req: Request) => {
+  // CORS headers for all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
+
   try {
+    console.log('Venue function called with method:', req.method)
+    
+    // Handle preflight OPTIONS request
     if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
+      return new Response(null, { status: 204, headers: corsHeaders })
     }
 
-    const body = await req.json()
-
-    const {
-      venueName, description, address, city, state, zipCode, latitude, longitude,
-      capacity, stageSize, genrePrefs, hasSound, hasLighting, hasParking, phone,
-      website, bookingEmail, payoutType, payoutDetails, photos
-    } = body
-
-    const supabaseId = body.supabaseId || null
-
-    let userId = null
-    if (supabaseId) {
-      const { data: users } = await supabase.from('users').select('id').eq('supabaseId', supabaseId).limit(1)
-      if (users && users.length > 0) userId = users[0].id
-    }
-
-    if (userId) {
-      const upsertPayload = { ...body, userId }
-      const { error } = await supabase.from('venue_profiles').upsert(upsertPayload, { onConflict: 'userId' })
-      if (error) throw error
-      return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    const { data: newUser, error: userErr } = await supabase.from('users').insert({ email: body.email || null, name: body.name || null, role: 'VENUE', supabaseId: supabaseId }).select('id').limit(1)
-    if (userErr) throw userErr
-    const newUserId = newUser && newUser[0] && newUser[0].id
-    if (!newUserId) throw new Error('Failed to create user')
-
-    const { error: vpErr } = await supabase.from('venue_profiles').insert({ ...body, userId: newUserId })
-    if (vpErr) throw vpErr
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+    const body = await req.json()
+    console.log('Received venue onboarding data:', { 
+      venueName: body.venueName, 
+      photosCount: body.photos?.length || 0 
     })
+
+    // Validate required fields
+    if (!body.venueName) {
+      return new Response(JSON.stringify({ error: 'Missing required field: venueName' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Simple approach: Create a placeholder user and venue profile
+    console.log('Creating venue profile for:', body.venueName)
+    
+    // Create user first
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert({ 
+        email: body.email || `${body.venueName.toLowerCase().replace(/\s+/g, '')}@example.com`, 
+        name: body.venueName, 
+        role: 'VENUE', 
+        supabaseId: `venue_${Date.now()}` 
+      })
+      .select('id')
+      .single()
+    
+    if (userError) {
+      console.error('User creation error:', userError)
+      throw new Error(`Failed to create user: ${userError.message}`)
+    }
+
+    console.log('User created with ID:', newUser.id)
+
+    // Create venue profile
+    const venueData = {
+      userId: newUser.id,
+      venueName: body.venueName,
+      description: body.description || '',
+      address: body.address || '',
+      city: body.city || '',
+      state: body.state || '',
+      zipCode: body.zipCode || '',
+      capacity: body.capacity ? parseInt(body.capacity) : null,
+      stageSize: body.stageSize || '',
+      genrePrefs: body.genrePrefs || [],
+      hasSound: body.hasSound || false,
+      hasLighting: body.hasLighting || false,
+      hasParking: body.hasParking || false,
+      phone: body.phone || '',
+      website: body.website || '',
+      bookingEmail: body.bookingEmail || '',
+      payoutType: body.payoutType || '',
+      payoutDetails: body.payoutDetails || '',
+      photos: body.photos || [],
+    }
+
+    const { error: venueError } = await supabase
+      .from('venue_profiles')
+      .insert(venueData)
+
+    if (venueError) {
+      console.error('Venue profile creation error:', venueError)
+      throw new Error(`Failed to create venue profile: ${venueError.message}`)
+    }
+
+    console.log('Successfully created venue profile for user:', newUser.id)
+    return new Response(JSON.stringify({ success: true, userId: newUser.id }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
   } catch (err) {
-    console.error(err)
+    console.error('Venue onboarding error:', err)
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 })
