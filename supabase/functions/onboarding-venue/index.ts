@@ -47,31 +47,67 @@ serve(async (req: Request) => {
       })
     }
 
-    // Simple approach: Create a placeholder user and venue profile
+    // Get authenticated user from JWT token
     console.log('Creating venue profile for:', body.venueName)
     
-    // Create user first
-    const { data: newUser, error: userError } = await supabase
-      .from('users')
-      .insert({ 
-        email: body.email || `${body.venueName.toLowerCase().replace(/\s+/g, '')}@example.com`, 
-        name: body.venueName, 
-        role: 'VENUE', 
-        supabaseId: `venue_${Date.now()}` 
+    // Get user from auth header
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
-      .select('id')
-      .single()
-    
-    if (userError) {
-      console.error('User creation error:', userError)
-      throw new Error(`Failed to create user: ${userError.message}`)
     }
 
-    console.log('User created with ID:', newUser.id)
+    const token = authHeader.replace('Bearer ', '')
+    const { data: authUser, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !authUser.user) {
+      console.error('Auth error:', authError)
+      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    console.log('Authenticated user:', authUser.user.email)
+
+    // Check if user already exists in our database
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('supabaseId', authUser.user.id)
+      .single()
+
+    let userId
+    if (existingUser) {
+      console.log('Using existing user:', existingUser.id)
+      userId = existingUser.id
+    } else {
+      // Create new user record linked to auth user
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({ 
+          email: authUser.user.email, 
+          name: body.venueName, 
+          role: 'VENUE', 
+          supabaseId: authUser.user.id 
+        })
+        .select('id')
+        .single()
+      
+      if (userError) {
+        console.error('User creation error:', userError)
+        throw new Error(`Failed to create user: ${userError.message}`)
+      }
+      
+      console.log('User created with ID:', newUser.id)
+      userId = newUser.id
+    }
 
     // Create venue profile
     const venueData = {
-      userId: newUser.id,
+      userId: userId,
       venueName: body.venueName,
       description: body.description || '',
       address: body.address || '',
@@ -101,8 +137,8 @@ serve(async (req: Request) => {
       throw new Error(`Failed to create venue profile: ${venueError.message}`)
     }
 
-    console.log('Successfully created venue profile for user:', newUser.id)
-    return new Response(JSON.stringify({ success: true, userId: newUser.id }), {
+    console.log('Successfully created venue profile for user:', userId)
+    return new Response(JSON.stringify({ success: true, userId: userId }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })

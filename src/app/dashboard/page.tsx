@@ -17,12 +17,16 @@ export default async function DashboardPage() {
   let userRole = null
   let profileData = null
 
-  // First check if user exists in our database
+  console.log('Dashboard: Looking for user with auth ID:', user.id)
+
+  // Look up user by their Supabase auth ID (now properly linked)
   const { data: dbUser } = await supabase
     .from('users')
-    .select('role')
+    .select('id, role, email')
     .eq('supabaseId', user.id)
     .single()
+
+  console.log('Dashboard: Found database user:', dbUser)
 
   if (dbUser) {
     userRole = dbUser.role
@@ -32,8 +36,10 @@ export default async function DashboardPage() {
       const { data: bandProfile } = await supabase
         .from('band_profiles')
         .select('*')
-        .eq('userId', (await supabase.from('users').select('id').eq('supabaseId', user.id).single()).data?.id)
+        .eq('userId', dbUser.id)
         .single()
+      
+      console.log('Dashboard: Found band profile:', bandProfile)
       
       if (bandProfile) {
         hasProfile = true
@@ -43,8 +49,10 @@ export default async function DashboardPage() {
       const { data: venueProfile } = await supabase
         .from('venue_profiles') 
         .select('*')
-        .eq('userId', (await supabase.from('users').select('id').eq('supabaseId', user.id).single()).data?.id)
+        .eq('userId', dbUser.id)
         .single()
+      
+      console.log('Dashboard: Found venue profile:', venueProfile)
       
       if (venueProfile) {
         hasProfile = true
