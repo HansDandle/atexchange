@@ -1,7 +1,9 @@
 export function getOnboardingBandFnUrl() {
-  return process.env.NEXT_PUBLIC_ONBOARDING_BAND_FN || '/api/supabase-fn/onboarding-band'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  return process.env.NEXT_PUBLIC_ONBOARDING_BAND_FN || `${supabaseUrl}/functions/v1/onboarding-band`
 }
 
 export function getOnboardingVenueFnUrl() {
-  return process.env.NEXT_PUBLIC_ONBOARDING_VENUE_FN || '/api/supabase-fn/onboarding-venue'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  return process.env.NEXT_PUBLIC_ONBOARDING_VENUE_FN || `${supabaseUrl}/functions/v1/onboarding-venue`
 }

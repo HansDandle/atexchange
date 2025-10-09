@@ -60,14 +60,22 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (onComplete) {
       onComplete(formData)
     } else {
       // default: call Supabase Edge Function
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
       fetch(getOnboardingBandFnUrl(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(formData)
       }).then(res => {
         if (res.ok) {
