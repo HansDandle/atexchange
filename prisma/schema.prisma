@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  email            String        @unique
+  name             String?
+  role             UserRole
+  createdAt        DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  supabaseId       String?       @unique
+  applications     Application[]
+  bandProfile      BandProfile?
+  receivedMessages Message[]     @relation("MessageReceiver")
+  sentMessages     Message[]     @relation("MessageSender")
+  venueProfile     VenueProfile?
+
+  @@index([email])
+  @@index([supabaseId], map: "users_supabaseid_idx")
+  @@map("users")
+}
+
+model BandProfile {
+  id             String             @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String             @unique
+  bandName       String
+  bio            String?
+  genre          String[]
+  location       String?
+  website        String?
+  spotifyUrl     String?
+  youtubeUrl     String?
+  instagramUrl   String?
+  facebookUrl    String?
+  photos         String[]
+  audioSamples   String[]
+  techRider      String?
+  minFee         Int?
+  maxFee         Int?
+  createdAt      DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  applications   Application[]
+  availableDates BandAvailability[]
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "band_profiles_userid_fkey")
+
+  @@index([userId], map: "band_profiles_userid_idx")
+  @@map("band_profiles")
+}
+
+model BandAvailability {
+  id            String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  bandProfileId String
+  startDate     DateTime    @db.Timestamptz(6)
+  endDate       DateTime    @db.Timestamptz(6)
+  isRecurring   Boolean     @default(false)
+  notes         String?
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
+  bandProfile   BandProfile @relation(fields: [bandProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "band_availability_bandprofileid_fkey")
+
+  @@map("band_availability")
+}
+
+model VenueProfile {
+  id            String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId        String        @unique
+  venueName     String
+  description   String?
+  address       String
+  city          String
+  state         String
+  zipCode       String
+  latitude      Float?
+  longitude     Float?
+  capacity      Int?
+  stageSize     String?
+  genrePrefs    String[]
+  hasSound      Boolean       @default(false)
+  hasLighting   Boolean       @default(false)
+  hasParking    Boolean       @default(false)
+  phone         String?
+  website       String?
+  bookingEmail  String?
+  payoutType    String?
+  payoutDetails String?
+  photos        String[]
+  createdAt     DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  applications  Application[]
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "venue_profiles_userid_fkey")
+  venueSlots    VenueSlot[]
+
+  @@index([userId], map: "venue_profiles_userid_idx")
+  @@map("venue_profiles")
+}
+
+model VenueSlot {
+  id             String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  venueProfileId String
+  eventDate      DateTime      @db.Timestamptz(6)
+  startTime      DateTime      @db.Timestamptz(6)
+  endTime        DateTime      @db.Timestamptz(6)
+  eventTitle     String?
+  description    String?
+  genrePrefs     String[]
+  minFee         Int?
+  maxFee         Int?
+  status         GigStatus     @default(AVAILABLE)
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  applications   Application[]
+  venueProfile   VenueProfile  @relation(fields: [venueProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "venue_slots_venueprofileid_fkey")
+
+  @@index([status])
+  @@index([venueProfileId], map: "venue_slots_venueprofileid_idx")
+  @@map("venue_slots")
+}
+
+model Application {
+  id             String            @id @default(dbgenerated("(gen_random_uuid())::text"))
+  bandProfileId  String
+  venueProfileId String
+  venueSlotId    String
+  userId         String
+  message        String?
+  proposedFee    Int?
+  status         ApplicationStatus @default(PENDING)
+  reviewedAt     DateTime?         @db.Timestamptz(6)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  bandProfile    BandProfile       @relation(fields: [bandProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_bandprofileid_fkey")
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_userid_fkey")
+  venueProfile   VenueProfile      @relation(fields: [venueProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_venueprofileid_fkey")
+  venueSlot      VenueSlot         @relation(fields: [venueSlotId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_venueslotid_fkey")
+  messages       Message[]
+
+  @@unique([bandProfileId, venueSlotId])
+  @@index([bandProfileId], map: "applications_bandprofileid_idx")
+  @@index([venueSlotId], map: "applications_venueslotid_idx")
+  @@map("applications")
+}
+
+model Message {
+  id            String       @id @default(dbgenerated("(gen_random_uuid())::text"))
+  senderId      String
+  receiverId    String
+  applicationId String?
+  content       String
+  isRead        Boolean      @default(false)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_applicationid_fkey")
+  receiver      User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_receiverid_fkey")
+  sender        User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "messages_senderid_fkey")
+
+  @@index([receiverId], map: "messages_receiverid_idx")
+  @@index([senderId], map: "messages_senderid_idx")
+  @@map("messages")
+}
+
+enum UserRole {
+  BAND
+  VENUE
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum GigStatus {
+  AVAILABLE
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
