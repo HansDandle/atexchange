@@ -102,8 +102,15 @@ export default function MessagingInterface({
 
       if (error) throw error
 
+      // Supabase can return relation fields as arrays; normalize to single objects
+      const normalized = {
+        ...data,
+        sender: Array.isArray((data as any).sender) ? (data as any).sender[0] : (data as any).sender,
+        receiver: Array.isArray((data as any).receiver) ? (data as any).receiver[0] : (data as any).receiver,
+      }
+
       // Add new message to state
-      setMessages(prev => [...prev, data])
+      setMessages(prev => [...prev, normalized as Message])
       setNewMessage('')
 
       // Update conversation's last message
@@ -150,8 +157,15 @@ export default function MessagingInterface({
 
       if (error) throw error
 
+      // Normalize sender/receiver arrays to single objects
+      const normalizedNew = {
+        ...data,
+        sender: Array.isArray((data as any).sender) ? (data as any).sender[0] : (data as any).sender,
+        receiver: Array.isArray((data as any).receiver) ? (data as any).receiver[0] : (data as any).receiver,
+      }
+
       // Add new message to state
-      setMessages(prev => [...prev, data])
+      setMessages(prev => [...prev, normalizedNew as Message])
 
       // Add new conversation
       const recipient = allUsers.find(user => user.id === selectedRecipient)
