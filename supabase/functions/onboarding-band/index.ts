@@ -70,6 +70,8 @@ serve(async (req: Request) => {
         status: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
         },
       })
     }
@@ -87,6 +89,8 @@ serve(async (req: Request) => {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     })
   } catch (err) {
@@ -95,6 +99,8 @@ serve(async (req: Request) => {
       status: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     })
   }
