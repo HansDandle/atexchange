@@ -73,7 +73,10 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
       
-      fetch(getOnboardingBandFnUrl(), {
+      const url = getOnboardingBandFnUrl()
+      console.log('🚀 Calling Edge Function at:', url)
+      
+      fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(formData)

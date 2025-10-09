@@ -1,9 +1,11 @@
 export function getOnboardingBandFnUrl() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  return process.env.NEXT_PUBLIC_ONBOARDING_BAND_FN || `${supabaseUrl}/functions/v1/onboarding-band`
+  // Always use Supabase Edge Functions directly
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jkylaqqajdjxpvrmuxfr.supabase.co'
+  return `${supabaseUrl}/functions/v1/onboarding-band`
 }
 
 export function getOnboardingVenueFnUrl() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  return process.env.NEXT_PUBLIC_ONBOARDING_VENUE_FN || `${supabaseUrl}/functions/v1/onboarding-venue`
+  // Always use Supabase Edge Functions directly
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jkylaqqajdjxpvrmuxfr.supabase.co'
+  return `${supabaseUrl}/functions/v1/onboarding-venue`
 }

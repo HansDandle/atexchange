@@ -12,8 +12,46 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // For now, we'll show a simple dashboard
-  // Later we'll check user profile and role to show appropriate content
+  // Check if user has completed their profile
+  let hasProfile = false
+  let userRole = null
+  let profileData = null
+
+  // First check if user exists in our database
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('role')
+    .eq('supabaseId', user.id)
+    .single()
+
+  if (dbUser) {
+    userRole = dbUser.role
+    
+    // Check for profile based on role
+    if (userRole === 'BAND') {
+      const { data: bandProfile } = await supabase
+        .from('band_profiles')
+        .select('*')
+        .eq('userId', (await supabase.from('users').select('id').eq('supabaseId', user.id).single()).data?.id)
+        .single()
+      
+      if (bandProfile) {
+        hasProfile = true
+        profileData = bandProfile
+      }
+    } else if (userRole === 'VENUE') {
+      const { data: venueProfile } = await supabase
+        .from('venue_profiles') 
+        .select('*')
+        .eq('userId', (await supabase.from('users').select('id').eq('supabaseId', user.id).single()).data?.id)
+        .single()
+      
+      if (venueProfile) {
+        hasProfile = true
+        profileData = venueProfile
+      }
+    }
+  }
   
   const handleSignOut = async () => {
     'use server'
@@ -48,29 +86,93 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <h2 className="text-3xl font-bold text-austin-charcoal mb-4">
-              Welcome to Your Dashboard!
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Your account has been created successfully. 
-              Let&apos;s set up your profile to get started.
-            </p>
-            
-            <div className="space-y-4">
-              <Link href="/onboarding">
-                <Button variant="austin" size="lg">
-                  Complete Your Profile
-                </Button>
-              </Link>
-              
-              <div className="text-sm text-gray-500">
-                User ID: {user.id}
-                <br />
-                Role: {user.user_metadata?.role || 'Not set'}
+          {hasProfile ? (
+            // Show dashboard content for users with completed profiles
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-2xl font-bold text-austin-charcoal mb-4">
+                  Welcome back, {profileData?.bandName || profileData?.venueName || user.user_metadata?.name}!
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  {userRole === 'BAND' ? 'Your band profile is complete. Start browsing available gigs!' : 
+                   userRole === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' : 
+                   'Your profile is set up and ready to go.'}
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {userRole === 'BAND' ? (
+                    <>
+                      <Button variant="austin" size="lg">
+                        Browse Available Gigs
+                      </Button>
+                      <Button variant="outline" size="lg">
+                        Edit Band Profile
+                      </Button>
+                    </>
+                  ) : userRole === 'VENUE' ? (
+                    <>
+                      <Button variant="austin" size="lg">
+                        Post Available Slots
+                      </Button>
+                      <Button variant="outline" size="lg">
+                        Edit Venue Profile
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Profile Summary Card */}
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h3 className="text-lg font-semibold text-austin-charcoal mb-3">Profile Summary</h3>
+                {userRole === 'BAND' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Band Name:</strong> {profileData.bandName}</p>
+                    <p><strong>Genres:</strong> {profileData.genre?.join(', ') || 'Not specified'}</p>
+                    <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
+                    <p><strong>Fee Range:</strong> {
+                      profileData.minFee && profileData.maxFee 
+                        ? `$${profileData.minFee/100} - $${profileData.maxFee/100}`
+                        : 'Negotiable'
+                    }</p>
+                  </div>
+                )}
+                {userRole === 'VENUE' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Venue Name:</strong> {profileData.venueName}</p>
+                    <p><strong>Location:</strong> {[profileData.city, profileData.state].filter(Boolean).join(', ') || 'Not specified'}</p>
+                    <p><strong>Capacity:</strong> {profileData.capacity ? `${profileData.capacity} people` : 'Not specified'}</p>
+                    <p><strong>Genre Preferences:</strong> {profileData.genrePrefs?.join(', ') || 'All genres'}</p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          ) : (
+            // Show onboarding prompt for users without profiles
+            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+              <h2 className="text-3xl font-bold text-austin-charcoal mb-4">
+                Welcome to Your Dashboard!
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Your account has been created successfully. 
+                Let&apos;s set up your profile to get started.
+              </p>
+              
+              <div className="space-y-4">
+                <Link href="/onboarding">
+                  <Button variant="austin" size="lg">
+                    Complete Your Profile
+                  </Button>
+                </Link>
+                
+                <div className="text-sm text-gray-500">
+                  User ID: {user.id}
+                  <br />
+                  Role: {userRole || user.user_metadata?.role || 'Not set'}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
