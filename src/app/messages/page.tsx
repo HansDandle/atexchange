@@ -38,11 +38,17 @@ export default async function MessagesPage() {
     .or(`senderId.eq.${dbUser.id},receiverId.eq.${dbUser.id}`)
     .order('createdAt', { ascending: false })
 
+  const normalizedMessages = (messages || []).map((m: any) => ({
+    ...m,
+    sender: Array.isArray(m.sender) ? m.sender[0] ?? null : m.sender ?? null,
+    receiver: Array.isArray(m.receiver) ? m.receiver[0] ?? null : m.receiver ?? null
+  }))
+
   // Get unique conversation partners
   const conversationPartners = new Map()
   
-  if (messages) {
-    messages.forEach((message: any) => {
+  if (normalizedMessages) {
+    normalizedMessages.forEach((message: any) => {
       const partnerId = message.senderId === dbUser.id ? message.receiverId : message.senderId
       const partner = message.senderId === dbUser.id ? message.receiver : message.sender
       
@@ -92,7 +98,7 @@ export default async function MessagesPage() {
         <MessagingInterface 
           currentUser={dbUser}
           conversations={Array.from(conversationPartners.values())}
-          allMessages={messages || []}
+          allMessages={normalizedMessages || []}
           allUsers={allUsers || []}
         />
       </main>

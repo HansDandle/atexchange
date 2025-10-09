@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 interface User {
   id: string
   name: string | null
-  email: string
+  email?: string | null
   role?: string
 }
 
@@ -28,7 +28,7 @@ interface Message {
 interface Conversation {
   id: string
   name: string | null
-  email: string
+  email?: string | null
   lastMessage: string
   lastMessageTime: string
   unreadCount: number
@@ -58,8 +58,8 @@ export default function MessagingInterface({
 
   // Filter conversations by search term
   const filteredConversations = conversations.filter(conv => 
-    conv.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (conv.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (conv.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   // Get messages for selected conversation

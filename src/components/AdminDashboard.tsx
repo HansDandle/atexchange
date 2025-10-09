@@ -22,7 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface User {
   id: string
-  email: string
+  email?: string | null
   name: string | null
   role: string
   createdAt: string
@@ -216,18 +216,18 @@ export default function AdminDashboard({
   }
 
   const filteredUsers = allUsers.filter(user =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const filteredBands = bandProfiles.filter(band =>
     band.bandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    band.users.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (band.users?.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const filteredVenues = venueProfiles.filter(venue =>
     venue.venueName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venue.users.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (venue.users?.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getStatusBadge = (status: string) => {
@@ -476,7 +476,7 @@ export default function AdminDashboard({
                       </Button>
                     </div>
                     <div className="space-y-2 text-sm text-gray-600">
-                      <p><strong>Email:</strong> {band.users.email}</p>
+                      <p><strong>Email:</strong> {band.users?.email ?? '—'}</p>
                       <p><strong>Location:</strong> {band.location || 'Not specified'}</p>
                       <p><strong>Genres:</strong> {band.genre?.join(', ') || 'Not specified'}</p>
                       <p><strong>Created:</strong> {new Date(band.createdAt).toLocaleDateString()}</p>
@@ -521,7 +521,7 @@ export default function AdminDashboard({
                       </Button>
                     </div>
                     <div className="space-y-2 text-sm text-gray-600">
-                      <p><strong>Email:</strong> {venue.users.email}</p>
+                      <p><strong>Email:</strong> {venue.users?.email ?? '—'}</p>
                       <p><strong>Location:</strong> {venue.city && venue.state ? `${venue.city}, ${venue.state}` : 'Not specified'}</p>
                       <p><strong>Capacity:</strong> {venue.capacity || 'Not specified'}</p>
                       <p><strong>Created:</strong> {new Date(venue.createdAt).toLocaleDateString()}</p>
@@ -576,7 +576,7 @@ export default function AdminDashboard({
                               {slot.venue_profiles.venueName}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {slot.venue_profiles.users.email}
+                              {slot.venue_profiles?.users?.email ?? '—'}
                             </p>
                           </div>
                         </td>
@@ -641,7 +641,7 @@ export default function AdminDashboard({
                               {app.band_profiles.bandName}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {app.band_profiles.users.email}
+                              {app.band_profiles?.users?.email ?? '—'}
                             </p>
                           </div>
                         </td>

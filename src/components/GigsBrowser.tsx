@@ -64,7 +64,7 @@ export default function GigsBrowser({ initialSlots }: GigsBrowserProps) {
   const filteredSlots = useMemo(() => {
     return slots.filter(slot => {
       const matchesSearch = searchTerm === '' || 
-        slot.venue_profiles.venueName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  (slot.venue_profiles?.venueName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         slot.eventTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         slot.description?.toLowerCase().includes(searchTerm.toLowerCase())
 

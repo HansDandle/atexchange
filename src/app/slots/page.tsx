@@ -73,6 +73,11 @@ export default async function SlotsPage() {
     .in('venueSlotId', (venueSlots || []).map((slot: any) => slot.id))
     .order('createdAt', { ascending: false })
 
+  const normalizedApplications = (applications || []).map((app: any) => ({
+    ...app,
+    band_profiles: Array.isArray(app.band_profiles) ? app.band_profiles[0] ?? null : app.band_profiles ?? null
+  }))
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -99,7 +104,7 @@ export default async function SlotsPage() {
         <SlotsManager 
           venueProfile={venueProfile}
           initialSlots={venueSlots || []}
-          initialApplications={applications || []}
+          initialApplications={normalizedApplications || []}
         />
       </main>
     </div>

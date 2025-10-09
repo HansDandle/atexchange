@@ -81,6 +81,20 @@ export default async function AdminPage() {
     .order('createdAt', { ascending: false })
     .limit(20)
 
+  // Normalize related objects (ensure single object for FK relations)
+  const normalizedApplications = (recentApplications || []).map((app: any) => {
+    const band = Array.isArray(app.band_profiles) ? app.band_profiles[0] ?? null : app.band_profiles ?? null
+    const venueSlot = Array.isArray(app.venue_slots) ? app.venue_slots[0] ?? null : app.venue_slots ?? null
+    return {
+      ...app,
+      band_profiles: band,
+      venue_slots: venueSlot ? ({
+        ...venueSlot,
+        venue_profiles: Array.isArray(venueSlot.venue_profiles) ? venueSlot.venue_profiles[0] ?? null : venueSlot.venue_profiles ?? null
+      }) : null
+    }
+  })
+
   // Fetch venue slots
   const { data: venueSlots } = await supabase
     .from('venue_slots')
@@ -95,6 +109,11 @@ export default async function AdminPage() {
     `)
     .order('createdAt', { ascending: false })
     .limit(50)
+
+  const normalizedVenueSlots = (venueSlots || []).map((slot: any) => ({
+    ...slot,
+    venue_profiles: Array.isArray(slot.venue_profiles) ? slot.venue_profiles[0] ?? null : slot.venue_profiles ?? null
+  }))
 
   // Fetch messages
   const { data: messages } = await supabase
@@ -118,8 +137,8 @@ export default async function AdminPage() {
       allUsers={allUsers || []}
       bandProfiles={bandProfiles || []}
       venueProfiles={venueProfiles || []}
-      recentApplications={recentApplications || []}
-      venueSlots={venueSlots || []}
+      recentApplications={normalizedApplications}
+      venueSlots={normalizedVenueSlots}
       messages={messages || []}
     />
   )

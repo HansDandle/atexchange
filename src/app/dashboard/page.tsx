@@ -68,14 +68,18 @@ export default async function DashboardPage() {
           .order('createdAt', { ascending: false })
           .limit(5)
 
-        recentActivity = (applications || []).map((app: any) => ({
-          type: 'application',
-          status: app.status,
-          venueName: app.venue_slots.venue_profiles.venueName,
-          eventTitle: app.venue_slots.eventTitle,
-          eventDate: app.venue_slots.eventDate,
-          createdAt: app.createdAt
-        }))
+        recentActivity = (applications || []).map((app: any) => {
+          const vs = Array.isArray(app.venue_slots) ? app.venue_slots[0] ?? null : app.venue_slots ?? null
+          const vp = vs ? (Array.isArray(vs.venue_profiles) ? vs.venue_profiles[0] ?? null : vs.venue_profiles ?? null) : null
+          return ({
+            type: 'application',
+            status: app.status,
+            venueName: vp?.venueName ?? 'Unknown Venue',
+            eventTitle: vs?.eventTitle ?? 'TBD',
+            eventDate: vs?.eventDate ?? null,
+            createdAt: app.createdAt
+          })
+        })
 
         // Get accepted gigs (upcoming)
         const { data: acceptedGigs } = await supabase
@@ -98,7 +102,18 @@ export default async function DashboardPage() {
           .order('venue_slots.eventDate', { ascending: true })
           .limit(3)
 
-        upcomingGigs = acceptedGigs || []
+        // Normalize accepted gigs
+        upcomingGigs = (acceptedGigs || []).map((g: any) => {
+          const vs = Array.isArray(g.venue_slots) ? g.venue_slots[0] ?? null : g.venue_slots ?? null
+          const normalizedVs = vs ? ({
+            ...vs,
+            venue_profiles: Array.isArray(vs.venue_profiles) ? vs.venue_profiles[0] ?? null : vs.venue_profiles ?? null
+          }) : null
+          return {
+            ...g,
+            venue_slots: normalizedVs
+          }
+        })
       }
     } else if (userRole === 'VENUE') {
       const { data: venueProfile } = await supabase
@@ -160,7 +175,13 @@ export default async function DashboardPage() {
           .order('eventDate', { ascending: true })
           .limit(3)
 
-        upcomingGigs = bookedSlots || []
+        upcomingGigs = (bookedSlots || []).map((slot: any) => ({
+          ...slot,
+          applications: (slot.applications || []).map((app: any) => ({
+            ...app,
+            band_profiles: Array.isArray(app.band_profiles) ? app.band_profiles[0] ?? null : app.band_profiles ?? null
+          }))
+        }))
       }
     }
   }
