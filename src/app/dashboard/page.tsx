@@ -110,19 +110,23 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {userRole === 'BAND' ? (
                     <>
-                      <Button variant="austin" size="lg">
-                        Browse Available Gigs
-                      </Button>
-                      <Button variant="outline" size="lg">
+                      <a href="/gigs">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Browse Available Gigs
+                        </Button>
+                      </a>
+                      <Button variant="outline" size="lg" className="w-full">
                         Edit Band Profile
                       </Button>
                     </>
                   ) : userRole === 'VENUE' ? (
                     <>
-                      <Button variant="austin" size="lg">
-                        Post Available Slots
-                      </Button>
-                      <Button variant="outline" size="lg">
+                      <a href="/slots">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Manage Available Slots
+                        </Button>
+                      </a>
+                      <Button variant="outline" size="lg" className="w-full">
                         Edit Venue Profile
                       </Button>
                     </>
