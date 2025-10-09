@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
   "build": "next build",
-  "pages:build": "next build && node ./scripts/strip-large-assets.js",
-    "start": "next start",
+  "pages:build": "next build && npx open-next build --platform cloudflare --output out",
+  "start": "next start",
+  "vercel:build": "next build",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
