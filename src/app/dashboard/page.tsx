@@ -56,10 +56,10 @@ export default async function DashboardPage() {
             status,
             createdAt,
             proposedFee,
-            venue_slots!inner (
+            venue_slots:venueSlotId (
               eventDate,
               eventTitle,
-              venue_profiles!inner (
+              venue_profiles:venueProfileId (
                 venueName
               )
             )
@@ -81,11 +81,11 @@ export default async function DashboardPage() {
         const { data: acceptedGigs } = await supabase
           .from('applications')
           .select(`
-            venue_slots!inner (
+            venue_slots:venueSlotId (
               eventDate,
               startTime,
               eventTitle,
-              venue_profiles!inner (
+              venue_profiles:venueProfileId (
                 venueName,
                 address,
                 city
@@ -120,10 +120,10 @@ export default async function DashboardPage() {
             id,
             status,
             createdAt,
-            band_profiles!inner (
+            band_profiles:bandProfileId (
               bandName
             ),
-            venue_slots!inner (
+            venue_slots:venueSlotId (
               eventDate,
               eventTitle
             )
@@ -148,8 +148,8 @@ export default async function DashboardPage() {
             eventDate,
             startTime,
             eventTitle,
-            applications!inner (
-              band_profiles!inner (
+            applications (
+              band_profiles:bandProfileId (
                 bandName
               )
             )
@@ -185,6 +185,13 @@ export default async function DashboardPage() {
               <span className="text-sm text-gray-600">
                 Welcome, {user.user_metadata?.name || user.email}
               </span>
+              {userRole === 'ADMIN' && (
+                <Link href="/admin">
+                  <Button variant="austin" size="sm">
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
               <form action={handleSignOut}>
                 <Button variant="outline" size="sm">
                   Sign Out
@@ -208,6 +215,7 @@ export default async function DashboardPage() {
                 <p className="text-gray-600 mb-4">
                   {userRole === 'BAND' ? 'Your band profile is complete. Start browsing available gigs!' : 
                    userRole === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' : 
+                   userRole === 'ADMIN' ? 'Welcome to the admin dashboard. Manage users, profiles, and platform data.' :
                    'Your profile is set up and ready to go.'}
                 </p>
                 

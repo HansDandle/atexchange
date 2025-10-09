@@ -1,7 +1,7 @@
 -- Recreate essential tables for Austin Talent Exchange
 
 -- Create enum types
-CREATE TYPE "UserRole" AS ENUM ('BAND', 'VENUE');
+CREATE TYPE "UserRole" AS ENUM ('BAND', 'VENUE', 'ADMIN');
 CREATE TYPE "ApplicationStatus" AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
 CREATE TYPE "SlotStatus" AS ENUM ('AVAILABLE', 'BOOKED', 'CANCELLED');
 
