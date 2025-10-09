@@ -34,7 +34,7 @@ export default async function GigsPage() {
       description,
       genrePrefs,
       status,
-      venue_profiles!inner (
+      venue_profiles (
         id,
         venueName,
         address,

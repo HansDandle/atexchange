@@ -60,7 +60,7 @@ export default async function SlotsPage() {
       proposedFee,
       createdAt,
       venueSlotId,
-      band_profiles!inner (
+      band_profiles (
         id,
         bandName,
         genre,
