@@ -28,8 +28,8 @@ export default async function DashboardPage() {
 
   console.log('Dashboard: Found database user:', dbUser)
 
-  let recentActivity = []
-  let upcomingGigs = []
+  let recentActivity: any[] = []
+  let upcomingGigs: any[] = []
 
   if (dbUser) {
     userRole = dbUser.role
