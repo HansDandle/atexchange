@@ -28,6 +28,9 @@ export default async function DashboardPage() {
 
   console.log('Dashboard: Found database user:', dbUser)
 
+  let recentActivity = []
+  let upcomingGigs = []
+
   if (dbUser) {
     userRole = dbUser.role
     
@@ -44,6 +47,58 @@ export default async function DashboardPage() {
       if (bandProfile) {
         hasProfile = true
         profileData = bandProfile
+
+        // Get recent applications for this band
+        const { data: applications } = await supabase
+          .from('applications')
+          .select(`
+            id,
+            status,
+            createdAt,
+            proposedFee,
+            venue_slots!inner (
+              eventDate,
+              eventTitle,
+              venue_profiles!inner (
+                venueName
+              )
+            )
+          `)
+          .eq('bandProfileId', bandProfile.id)
+          .order('createdAt', { ascending: false })
+          .limit(5)
+
+        recentActivity = (applications || []).map((app: any) => ({
+          type: 'application',
+          status: app.status,
+          venueName: app.venue_slots.venue_profiles.venueName,
+          eventTitle: app.venue_slots.eventTitle,
+          eventDate: app.venue_slots.eventDate,
+          createdAt: app.createdAt
+        }))
+
+        // Get accepted gigs (upcoming)
+        const { data: acceptedGigs } = await supabase
+          .from('applications')
+          .select(`
+            venue_slots!inner (
+              eventDate,
+              startTime,
+              eventTitle,
+              venue_profiles!inner (
+                venueName,
+                address,
+                city
+              )
+            )
+          `)
+          .eq('bandProfileId', bandProfile.id)
+          .eq('status', 'ACCEPTED')
+          .gte('venue_slots.eventDate', new Date().toISOString().split('T')[0])
+          .order('venue_slots.eventDate', { ascending: true })
+          .limit(3)
+
+        upcomingGigs = acceptedGigs || []
       }
     } else if (userRole === 'VENUE') {
       const { data: venueProfile } = await supabase
@@ -57,6 +112,55 @@ export default async function DashboardPage() {
       if (venueProfile) {
         hasProfile = true
         profileData = venueProfile
+
+        // Get recent applications to this venue's slots
+        const { data: applications } = await supabase
+          .from('applications')
+          .select(`
+            id,
+            status,
+            createdAt,
+            band_profiles!inner (
+              bandName
+            ),
+            venue_slots!inner (
+              eventDate,
+              eventTitle
+            )
+          `)
+          .eq('venue_slots.venueProfileId', venueProfile.id)
+          .order('createdAt', { ascending: false })
+          .limit(5)
+
+        recentActivity = (applications || []).map((app: any) => ({
+          type: 'application_received',
+          status: app.status,
+          bandName: app.band_profiles.bandName,
+          eventTitle: app.venue_slots.eventTitle,
+          eventDate: app.venue_slots.eventDate,
+          createdAt: app.createdAt
+        }))
+
+        // Get upcoming booked slots
+        const { data: bookedSlots } = await supabase
+          .from('venue_slots')
+          .select(`
+            eventDate,
+            startTime,
+            eventTitle,
+            applications!inner (
+              band_profiles!inner (
+                bandName
+              )
+            )
+          `)
+          .eq('venueProfileId', venueProfile.id)
+          .eq('status', 'BOOKED')
+          .gte('eventDate', new Date().toISOString().split('T')[0])
+          .order('eventDate', { ascending: true })
+          .limit(3)
+
+        upcomingGigs = bookedSlots || []
       }
     }
   }
@@ -115,9 +219,11 @@ export default async function DashboardPage() {
                           Browse Available Gigs
                         </Button>
                       </a>
-                      <Button variant="outline" size="lg" className="w-full">
-                        Edit Band Profile
-                      </Button>
+                      <a href="/profile/edit">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Edit Band Profile
+                        </Button>
+                      </a>
                     </>
                   ) : userRole === 'VENUE' ? (
                     <>
@@ -126,13 +232,110 @@ export default async function DashboardPage() {
                           Manage Available Slots
                         </Button>
                       </a>
-                      <Button variant="outline" size="lg" className="w-full">
-                        Edit Venue Profile
-                      </Button>
+                      <a href="/profile/edit">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Edit Venue Profile
+                        </Button>
+                      </a>
                     </>
                   ) : null}
                 </div>
               </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h3 className="text-lg font-semibold text-austin-charcoal mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <a href="/messages">
+                    <Button variant="outline" className="w-full">
+                      Messages
+                    </Button>
+                  </a>
+                  {userRole === 'BAND' && (
+                    <a href="/gigs">
+                      <Button variant="outline" className="w-full">
+                        Find More Gigs
+                      </Button>
+                    </a>
+                  )}
+                  {userRole === 'VENUE' && (
+                    <a href="/slots">
+                      <Button variant="outline" className="w-full">
+                        Add More Slots
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h3 className="text-lg font-semibold text-austin-charcoal mb-4">Recent Activity</h3>
+                {recentActivity.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentActivity.map((activity: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          activity.status === 'ACCEPTED' ? 'bg-green-500' :
+                          activity.status === 'REJECTED' ? 'bg-red-500' :
+                          'bg-yellow-500'
+                        }`}></div>
+                        <div className="flex-1">
+                          {activity.type === 'application' ? (
+                            <p className="text-sm">
+                              <span className="font-medium">Application {activity.status.toLowerCase()}</span> for "{activity.eventTitle}" at {activity.venueName}
+                            </p>
+                          ) : (
+                            <p className="text-sm">
+                              <span className="font-medium">New application</span> from {activity.bandName} for "{activity.eventTitle}"
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(activity.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No recent activity</p>
+                )}
+              </div>
+
+              {/* Upcoming Gigs */}
+              {upcomingGigs.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <h3 className="text-lg font-semibold text-austin-charcoal mb-4">
+                    {userRole === 'BAND' ? 'Upcoming Gigs' : 'Upcoming Shows'}
+                  </h3>
+                  <div className="space-y-3">
+                    {upcomingGigs.map((gig: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-austin-orange/5 rounded-lg border border-austin-orange/20">
+                        <div className="w-2 h-2 bg-austin-orange rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          {userRole === 'BAND' ? (
+                            <p className="text-sm">
+                              <span className="font-medium">{gig.venue_slots.eventTitle}</span> at {gig.venue_slots.venue_profiles.venueName}
+                            </p>
+                          ) : (
+                            <p className="text-sm">
+                              <span className="font-medium">{gig.eventTitle}</span> with {gig.applications[0]?.band_profiles.bandName}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-600 mt-1">
+                            {new Date(userRole === 'BAND' ? gig.venue_slots.eventDate : gig.eventDate).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Profile Summary Card */}
               <div className="bg-white rounded-lg shadow-sm border p-6">
