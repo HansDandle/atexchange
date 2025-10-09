@@ -52,6 +52,12 @@ export default async function GigsPage() {
     .gte('eventDate', new Date().toISOString().split('T')[0])
     .order('eventDate', { ascending: true })
 
+  // Normalize related profile objects: Supabase sometimes returns related rows as arrays
+  const normalizedSlots = (venueSlots || []).map((slot: any) => ({
+    ...slot,
+    venue_profiles: Array.isArray(slot.venue_profiles) ? slot.venue_profiles[0] ?? null : slot.venue_profiles ?? null,
+  }))
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -75,7 +81,7 @@ export default async function GigsPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <GigsBrowser initialSlots={venueSlots || []} />
+  <GigsBrowser initialSlots={normalizedSlots} />
       </main>
     </div>
   )
