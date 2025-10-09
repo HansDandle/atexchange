@@ -13,6 +13,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
 
 serve(async (req: Request) => {
   try {
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      });
+    }
+
     const body = await req.json()
 
     // Expecting fields similar to band_profiles
@@ -55,7 +66,12 @@ serve(async (req: Request) => {
       const upsertPayload = { ...payload, userId }
       const { error } = await supabase.from('band_profiles').upsert(upsertPayload, { onConflict: 'userId' })
       if (error) throw error
-      return new Response(JSON.stringify({ ok: true }), { status: 200 })
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
     }
 
     // Otherwise, insert a placeholder user (not ideal) - recommend client sends supabaseId
@@ -67,9 +83,19 @@ serve(async (req: Request) => {
     const { error: bpErr } = await supabase.from('band_profiles').insert({ ...payload, userId: newUserId })
     if (bpErr) throw bpErr
 
-    return new Response(JSON.stringify({ ok: true }), { status: 200 })
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   } catch (err) {
     console.error(err)
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   }
 })
