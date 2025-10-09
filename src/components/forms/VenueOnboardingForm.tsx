@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getOnboardingVenueFnUrl } from '@/lib/supabase/functions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 interface VenueOnboardingFormProps {
-  onComplete: (data: any) => void
+  onComplete?: (data: any) => void
 }
 
 const GENRE_PREFERENCES = [
@@ -39,6 +40,7 @@ export default function VenueOnboardingForm({ onComplete }: VenueOnboardingFormP
     bookingEmail: '',
     payoutType: '',
     payoutDetails: ''
+    ,photos: [] as string[]
   })
   const [uploading, setUploading] = useState(false)
 
@@ -67,7 +69,24 @@ export default function VenueOnboardingForm({ onComplete }: VenueOnboardingFormP
   }
 
   const handleSubmit = () => {
-    onComplete(formData)
+    if (onComplete) {
+      onComplete(formData)
+    } else {
+      fetch(getOnboardingVenueFnUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      }).then(res => {
+        if (res.ok) {
+          window.location.href = '/dashboard'
+        } else {
+          alert('Failed to save profile')
+        }
+      }).catch(err => {
+        console.error(err)
+        alert('Failed to save profile')
+      })
+    }
   }
 
   const uploadFiles = async (files: FileList | null, folder = 'venues') => {

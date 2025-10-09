@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getOnboardingBandFnUrl } from '@/lib/supabase/functions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 interface BandOnboardingFormProps {
-  onComplete: (data: any) => void
+  onComplete?: (data: any) => void
 }
 
 const GENRE_OPTIONS = [
@@ -27,6 +28,8 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
     youtubeUrl: '',
     instagramUrl: '',
     facebookUrl: '',
+    photos: [] as string[],
+    audioSamples: [] as string[],
     techRider: '',
     minFee: '',
     maxFee: ''
@@ -58,7 +61,25 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
   }
 
   const handleSubmit = () => {
-    onComplete(formData)
+    if (onComplete) {
+      onComplete(formData)
+    } else {
+      // default: call Supabase Edge Function
+      fetch(getOnboardingBandFnUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      }).then(res => {
+        if (res.ok) {
+          window.location.href = '/dashboard'
+        } else {
+          alert('Failed to save profile')
+        }
+      }).catch(err => {
+        console.error(err)
+        alert('Failed to save profile')
+      })
+    }
   }
 
   const uploadFiles = async (files: FileList | null, folder = 'bands') => {

@@ -214,7 +214,7 @@ export default function Home() {
                     className="w-full sm:w-auto text-lg px-8 py-6 bg-austin-orange hover:bg-austin-warm shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
                   >
                     Create Your Profile
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <IconArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
                 <Button 
