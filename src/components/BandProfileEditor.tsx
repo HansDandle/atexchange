@@ -72,6 +72,16 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
     const supabase = createClient()
     const urls: string[] = []
     
+    // Enforce 5-photo limit for photos
+    if (type === 'photos') {
+      const existing = formData.photos.length
+      if (existing + files.length > 5) {
+        alert('You can upload up to 5 photos. Please remove some photos before adding more.')
+        setUploading(false)
+        return []
+      }
+    }
+
     for (const file of Array.from(files)) {
       const bucket = type === 'photos' ? 'bands' : 'bands'
       const key = `${type}/${Date.now()}-${file.name}`

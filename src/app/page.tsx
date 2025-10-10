@@ -114,6 +114,19 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+            {/* Prominent browse CTAs for anonymous users */}
+            <div className="flex items-center justify-center gap-4 mt-2 mb-16">
+              <Link href="/bands">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-6 py-4">
+                  Browse Bands
+                </Button>
+              </Link>
+              <Link href="/venues">
+                <Button variant="ghost" size="lg" className="w-full sm:w-auto text-lg px-6 py-4">
+                  Browse Venues
+                </Button>
+              </Link>
+            </div>
 
             {/* Stats */}
             {/* Neutral stats / trust removed for beta */}
@@ -152,6 +165,11 @@ export default function Home() {
                   <li>• Smart calendar sync</li>
                   <li>• Direct venue messaging</li>
                 </ul>
+                <div className="mt-6">
+                  <Link href="/bands">
+                    <Button variant="outline" size="sm" className="text-austin-charcoal">Browse Bands</Button>
+                  </Link>
+                </div>
               </div>
 
               <div className="group bg-white rounded-2xl p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
@@ -169,6 +187,11 @@ export default function Home() {
                   <li>• Application tracking</li>
                   <li>• Secure booking system</li>
                 </ul>
+                <div className="mt-6">
+                  <Link href="/venues">
+                    <Button variant="outline" size="sm" className="text-austin-charcoal">Browse Venues</Button>
+                  </Link>
+                </div>
               </div>
 
               <div className="group bg-white rounded-2xl p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 md:col-span-2 lg:col-span-1">

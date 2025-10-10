@@ -7,20 +7,53 @@ interface Props { params: { id: string } }
 export default async function VenueProfilePage({ params }: Props) {
   const supabase = createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const res = await supabase.auth.getUser()
+    user = res?.data?.user ?? null
+  } catch (e) {
+    user = null
+  }
 
-  const { data: venueProfiles } = await supabase
-    .from('venue_profiles')
-    .select(`
-      *,
-      user:users!venue_profiles_userId (id, email, name)
-    `)
-    .eq('id', params.id)
+  let venue: any = null
+  try {
+    const { data: venueProfiles, error } = await supabase
+      .from('venue_profiles')
+      .select(`
+        *,
+        user:users!venue_profiles_userId (id, email, name, supabaseId)
+      `)
+      .eq('id', params.id)
 
-  const venue = (venueProfiles || [])[0] ?? null
+    if (error) throw error
+    venue = (venueProfiles || [])[0] ?? null
+    if (venue) venue.user = Array.isArray(venue.user) ? venue.user[0] ?? null : venue.user ?? null
+  } catch (err: any) {
+    if (err.code === 'PGRST200' || (err.details && String(err.details).includes('no matches were found'))) {
+      const { data: venueRow } = await supabase
+        .from('venue_profiles')
+        .select('*')
+        .eq('id', params.id)
+        .single()
+      if (!venueRow) return redirect('/')
+      let owner = null
+      if (venueRow.userId) {
+        const { data: userRow } = await supabase
+          .from('users')
+          .select('id, email, name, supabaseId')
+          .eq('id', venueRow.userId)
+          .single()
+        owner = userRow ?? null
+      }
+      venue = { ...venueRow, user: owner }
+    } else {
+      throw err
+    }
+  }
+
   if (!venue) return redirect('/')
 
-  const owner = Array.isArray(venue.user) ? venue.user[0] ?? null : venue.user ?? null
+  const owner = venue.user
   const isOwner = user && owner && owner.supabaseId === user.id
 
   return (
