@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 interface VenueOnboardingFormProps {
   onComplete?: (data: any) => void
+  initialData?: Partial<{ venueName: string }>
 }
 
 const GENRE_PREFERENCES = [
@@ -21,7 +22,7 @@ const PAYOUT_TYPES = [
   'Flat Fee', 'Door Split', 'Percentage of Bar Sales', 'Negotiable'
 ]
 
-export default function VenueOnboardingForm({ onComplete }: VenueOnboardingFormProps) {
+export default function VenueOnboardingForm({ onComplete, initialData }: VenueOnboardingFormProps) {
   const [formData, setFormData] = useState({
     venueName: '',
     description: '',
@@ -42,6 +43,10 @@ export default function VenueOnboardingForm({ onComplete }: VenueOnboardingFormP
     payoutDetails: ''
     ,photos: [] as string[]
   })
+  // Apply initialData if provided (pre-fill venueName from signup)
+  if (initialData?.venueName && !formData.venueName) {
+    setFormData(prev => ({ ...prev, venueName: initialData.venueName as string }))
+  }
   const [uploading, setUploading] = useState(false)
 
   const [currentStep, setCurrentStep] = useState(1)

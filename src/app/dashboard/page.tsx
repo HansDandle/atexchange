@@ -28,22 +28,40 @@ export default async function DashboardPage() {
 
   console.log('Dashboard: Found database user:', dbUser)
 
+  // If we didn't find a user by supabaseId (older records), try matching by email
+  let resolvedDbUser = dbUser
+  if (!resolvedDbUser) {
+    const { data: byEmail } = await supabase
+      .from('users')
+      .select('id, role, email')
+      .eq('email', user.email)
+      .single()
+    if (byEmail) {
+      console.log('Dashboard: Found database user by email fallback:', byEmail)
+      resolvedDbUser = byEmail
+    }
+  }
+
   let recentActivity: any[] = []
   let upcomingGigs: any[] = []
+  let bandProfiles: any[] = []
 
-  if (dbUser) {
-    userRole = dbUser.role
+  if (resolvedDbUser) {
+    userRole = resolvedDbUser.role
     
     // Check for profile based on role
     if (userRole === 'BAND') {
-      const { data: bandProfile } = await supabase
+      // Fetch all band profiles for this user (support multiple bands)
+      const { data } = await supabase
         .from('band_profiles')
         .select('*')
-        .eq('userId', dbUser.id)
-        .single()
-      
-      console.log('Dashboard: Found band profile:', bandProfile)
-      
+        .eq('userId', resolvedDbUser.id)
+
+      bandProfiles = data || []
+      const bandProfile = (bandProfiles && bandProfiles[0]) || null
+
+      console.log('Dashboard: Found band profiles:', bandProfiles)
+
       if (bandProfile) {
         hasProfile = true
         profileData = bandProfile
@@ -116,11 +134,11 @@ export default async function DashboardPage() {
         })
       }
     } else if (userRole === 'VENUE') {
-      const { data: venueProfile } = await supabase
-        .from('venue_profiles') 
-        .select('*')
-        .eq('userId', dbUser.id)
-        .single()
+  const { data: venueProfile } = await supabase
+  .from('venue_profiles') 
+  .select('*')
+  .eq('userId', resolvedDbUser.id)
+  .single()
       
       console.log('Dashboard: Found venue profile:', venueProfile)
       
@@ -211,6 +229,11 @@ export default async function DashboardPage() {
                   <Button variant="austin" size="sm">
                     Admin Dashboard
                   </Button>
+                </Link>
+              )}
+              {userRole === 'BAND' && (
+                <Link href="/onboarding?role=band">
+                  <Button variant="outline" size="sm">Create New Band</Button>
                 </Link>
               )}
               <form action={handleSignOut}>
@@ -371,7 +394,7 @@ export default async function DashboardPage() {
                 <h3 className="text-lg font-semibold text-austin-charcoal mb-3">Profile Summary</h3>
                 {userRole === 'BAND' && profileData && (
                   <div className="space-y-2">
-                    <p><strong>Band Name:</strong> {profileData.bandName}</p>
+                    <p><strong>Primary Band:</strong> {profileData.bandName}</p>
                     <p><strong>Genres:</strong> {profileData.genre?.join(', ') || 'Not specified'}</p>
                     <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
                     <p><strong>Fee Range:</strong> {
@@ -379,6 +402,17 @@ export default async function DashboardPage() {
                         ? `$${profileData.minFee/100} - $${profileData.maxFee/100}`
                         : 'Negotiable'
                     }</p>
+                    {/* If user has multiple bands, list them */}
+                    {Array.isArray(bandProfiles) && bandProfiles.length > 1 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium">Your Bands:</p>
+                        <ul className="list-disc list-inside text-sm">
+                          {bandProfiles.map((b: any) => (
+                            <li key={b.id}>{b.bandName}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
                 {userRole === 'VENUE' && profileData && (

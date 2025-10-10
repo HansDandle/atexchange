@@ -62,6 +62,8 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
   const [editingSlot, setEditingSlot] = useState<VenueSlot | null>(null)
   const [viewingApplications, setViewingApplications] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedBand, setSelectedBand] = useState<any | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
   
   // Form state
   const [formData, setFormData] = useState({
@@ -436,7 +438,76 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                                 </div>
                               )}
                             </div>
+                            <div className="ml-4 flex flex-col items-end space-y-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  // Open band profile preview
+                                  const bandId = application.band_profiles?.id
+                                  if (!bandId) return alert('Band profile not found')
+                                  setPreviewLoading(true)
+                                  try {
+                                    const supabase = createClient()
+                                    // Try a single request with a foreign-key join first
+                                    const { data, error } = await supabase
+                                      .from('band_profiles')
+                                      .select(`
+                                        *,
+                                        user:users!band_profiles_userId (id, email, name, supabaseId)
+                                      `)
+                                      .eq('id', bandId)
 
+                                    if (error) {
+                                      // If PostgREST can't find the relationship in the schema cache
+                                      // fall back to two simple queries: get band by id, then get user by userId
+                                      if (error.code === 'PGRST200' || (error.details && String(error.details).includes('no matches were found'))) {
+                                        const { data: bandRow, error: bandErr } = await supabase
+                                          .from('band_profiles')
+                                          .select('*')
+                                          .eq('id', bandId)
+                                          .single()
+
+                                        if (bandErr) throw bandErr
+
+                                        let owner = null
+                                        if (bandRow && bandRow.userId) {
+                                          const { data: userRow } = await supabase
+                                            .from('users')
+                                            .select('id, email, name, supabaseId')
+                                            .eq('id', bandRow.userId)
+                                            .single()
+                                          owner = userRow ?? null
+                                        }
+
+                                        const band = {
+                                          ...bandRow,
+                                          user: owner
+                                        }
+                                        setSelectedBand(band)
+                                        setPreviewLoading(false)
+                                        return
+                                      }
+                                      throw error
+                                    }
+
+                                    const band = (data || [])[0] ?? null
+                                    if (band) {
+                                      band.user = Array.isArray(band.user) ? band.user[0] ?? null : band.user ?? null
+                                    }
+                                    setSelectedBand(band)
+                                  } catch (caught: any) {
+                                    console.error('Failed to load band profile:', caught)
+                                    alert('Failed to load band profile')
+                                  } finally {
+                                    setPreviewLoading(false)
+                                  }
+                                }}
+                                className="text-sm"
+                              >
+                                {previewLoading ? 'Loading...' : 'View Profile'}
+                              </Button>
+                            </div>
                             {application.status === 'PENDING' && (
                               <div className="flex space-x-2 ml-4">
                                 <Button
@@ -590,6 +661,39 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
               >
                 {isSubmitting ? 'Saving...' : (editingSlot ? 'Update Slot' : 'Create Slot')}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Band Preview Modal */}
+      {selectedBand && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-austin-charcoal">{selectedBand.bandName}</h3>
+                <p className="text-sm text-gray-600">{selectedBand.location ?? 'Location not provided'}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <a href={`/bands/${selectedBand.id}`} className="text-austin-orange text-sm">Open Profile</a>
+                <Button variant="outline" size="sm" onClick={() => setSelectedBand(null)}>Close</Button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h4 className="font-semibold">About</h4>
+              <p className="mt-2">{selectedBand.bio ?? 'No bio yet.'}</p>
+            </div>
+
+            <div className="mt-4">
+              <h4 className="font-semibold">Genres</h4>
+              <p className="mt-1">{(selectedBand.genre || []).join(', ')}</p>
+            </div>
+
+            <div className="mt-4">
+              <h4 className="font-semibold">Contact</h4>
+              <p className="mt-1">{selectedBand.user?.name ?? selectedBand.user?.email ?? '—'}</p>
             </div>
           </div>
         </div>

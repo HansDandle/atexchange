@@ -1,8 +1,8 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -12,23 +12,11 @@ export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [name, setName] = useState('')
   const [role, setRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
-
-  // Get role from URL parameter if present
-  useEffect(() => {
-    const roleParam = searchParams.get('role')
-    if (roleParam === 'band') {
-      setRole('BAND')
-    } else if (roleParam === 'venue') {
-      setRole('VENUE')
-    }
-  }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,19 +30,17 @@ export default function SignupPage() {
     }
 
     if (!role) {
-      setError('Please select whether you are a band or venue')
+      setError('Please select whether you are an artist or venue')
       setLoading(false)
       return
     }
-
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
-            role,
+            role
           }
         }
       })
@@ -64,10 +50,10 @@ export default function SignupPage() {
         return
       }
 
-      if (data.user) {
-        // Redirect to onboarding or dashboard
-        router.push('/onboarding')
-      }
+        if (data.user) {
+          // After signup send user to dashboard to create profiles
+          router.push('/dashboard')
+        }
     } catch (err) {
       setError('An unexpected error occurred')
     } finally {
@@ -97,29 +83,29 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Role Selection */}
+            {/* Role Selection: Artist or Venue */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                I am a...
+                I am an...
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole('BAND')}
                   className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                    role === 'BAND' 
+                    role === 'BAND'
                       ? 'border-austin-orange bg-austin-orange/10 text-austin-orange'
                       : 'border-gray-200 hover:border-austin-orange/50'
                   }`}
                 >
                   <div className="text-2xl mb-1">🎵</div>
-                  <div className="font-medium">Band</div>
+                  <div className="font-medium">Artist</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('VENUE')}
                   className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                    role === 'VENUE' 
+                    role === 'VENUE'
                       ? 'border-austin-orange bg-austin-orange/10 text-austin-orange'
                       : 'border-gray-200 hover:border-austin-orange/50'
                   }`}
@@ -130,20 +116,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                {role === 'BAND' ? 'Band Name' : role === 'VENUE' ? 'Venue Name' : 'Name'}
-              </label>
-              <input
-                id="name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-austin-orange transition-colors"
-                placeholder={role === 'BAND' ? 'Your band name' : role === 'VENUE' ? 'Your venue name' : 'Your name'}
-              />
-            </div>
+            {/* Name is collected during onboarding; signup only asks for email & password */}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">

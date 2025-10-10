@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 interface BandOnboardingFormProps {
   onComplete?: (data: any) => void
+  initialData?: Partial<{ bandName: string }>
 }
 
 const GENRE_OPTIONS = [
@@ -17,7 +18,7 @@ const GENRE_OPTIONS = [
   'Hip-Hop', 'R&B', 'Soul', 'Funk', 'Reggae', 'Other'
 ]
 
-export default function BandOnboardingForm({ onComplete }: BandOnboardingFormProps) {
+export default function BandOnboardingForm({ onComplete, initialData }: BandOnboardingFormProps) {
   const [formData, setFormData] = useState({
     bandName: '',
     bio: '',
@@ -34,6 +35,10 @@ export default function BandOnboardingForm({ onComplete }: BandOnboardingFormPro
     minFee: '',
     maxFee: ''
   })
+  // Apply initialData if provided (e.g., pre-fill bandName from signup)
+  if (initialData?.bandName && !formData.bandName) {
+    setFormData(prev => ({ ...prev, bandName: initialData.bandName as string }))
+  }
   const [uploading, setUploading] = useState(false)
 
   const [currentStep, setCurrentStep] = useState(1)

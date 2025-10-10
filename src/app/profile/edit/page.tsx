@@ -24,15 +24,16 @@ export default async function EditProfilePage() {
   }
 
   if (dbUser.role === 'BAND') {
-    const { data: bandProfile } = await supabase
+    const { data: bandProfiles } = await supabase
       .from('band_profiles')
       .select('*')
       .eq('userId', dbUser.id)
-      .single()
 
-    if (!bandProfile) {
+    if (!bandProfiles || bandProfiles.length === 0) {
       redirect('/dashboard')
     }
+
+    const firstProfile = (bandProfiles || [])[0]
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -50,7 +51,19 @@ export default async function EditProfilePage() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-          <BandProfileEditor profile={bandProfile} />
+          {/* If the user has multiple bands, show a simple selector */}
+          {bandProfiles.length > 1 && (
+            <div className="mb-6">
+              <p className="text-sm text-gray-600">Select a band to edit:</p>
+              <div className="flex space-x-3 mt-2">
+                {bandProfiles.map((p: any) => (
+                  <a key={p.id} href={`#/band-${p.id}`} className="px-3 py-1 border rounded">{p.bandName}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <BandProfileEditor profile={firstProfile} />
         </main>
       </div>
     )

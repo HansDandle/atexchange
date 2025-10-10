@@ -44,8 +44,8 @@ export default function OnboardingPageClient() {
 
           <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-austin-orange/20">
             <div>
-              {role === 'BAND' && <BandOnboardingForm />}
-              {role === 'VENUE' && <VenueOnboardingForm />}
+              {role === 'BAND' && <BandOnboardingForm initialData={{ bandName: user?.user_metadata?.name || '' }} />}
+              {role === 'VENUE' && <VenueOnboardingForm initialData={{ venueName: user?.user_metadata?.name || '' }} />}
               {!role && <div className="text-center p-6">Please contact support for assistance.</div>}
             </div>
           </div>

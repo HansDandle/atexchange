@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS "users_supabaseid_idx" ON "users"("supabaseId");
 -- Create band_profiles table
 CREATE TABLE IF NOT EXISTS "band_profiles" (
   "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  "userId" TEXT UNIQUE NOT NULL,
+  "userId" TEXT NOT NULL,
   "bandName" TEXT NOT NULL,
   "bio" TEXT,
   "genre" TEXT[],
