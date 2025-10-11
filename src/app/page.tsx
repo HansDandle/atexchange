@@ -276,20 +276,20 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">For Musicians</h4>
               <ul className="space-y-2 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Create EPK</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Find Gigs</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Band Resources</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Success Stories</a></li>
+                <li><a href="/profile/edit" className="hover:text-austin-orange transition-colors">Create EPK</a></li>
+                <li><a href="/gigs" className="hover:text-austin-orange transition-colors">Find Gigs</a></li>
+                <li><a href="/bands" className="hover:text-austin-orange transition-colors">Browse Bands</a></li>
+                <li><a href="/onboarding" className="hover:text-austin-orange transition-colors">Get Started</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">For Venues</h4>
               <ul className="space-y-2 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-austin-orange transition-colors">List Your Venue</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Find Bands</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Venue Tools</a></li>
-                <li><a href="#" className="hover:text-austin-orange transition-colors">Pricing</a></li>
+                <li><a href="/profile/edit" className="hover:text-austin-orange transition-colors">List Your Venue</a></li>
+                <li><a href="/bands" className="hover:text-austin-orange transition-colors">Find Bands</a></li>
+                <li><a href="/slots" className="hover:text-austin-orange transition-colors">Venue Tools</a></li>
+                <li><a href="/about" className="hover:text-austin-orange transition-colors">Help & Pricing</a></li>
               </ul>
             </div>
           </div>

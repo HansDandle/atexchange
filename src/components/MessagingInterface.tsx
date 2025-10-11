@@ -120,6 +120,24 @@ export default function MessagingInterface({
           : conv
       ))
 
+      // Trigger server-side email notification if receiver has an email
+      try {
+        const receiverEmail = normalized.receiver?.email
+        if (receiverEmail) {
+          fetch('/api/notify-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: receiverEmail,
+              subject: `New message from ${normalized.sender?.name || 'A user'}`,
+              text: `${(normalized.sender?.name || normalized.sender?.email)}: ${newMessage.trim()}`
+            })
+          }).catch(e => console.warn('notify-message failed', e))
+        }
+      } catch (e) {
+        console.warn('notify attempt failed', e)
+      }
+
     } catch (error) {
       console.error('Error sending message:', error)
       alert('Failed to send message. Please try again.')

@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -13,10 +13,18 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState<UserRole | null>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const r = searchParams?.get('role')
+    if (r === 'band') setRole('BAND')
+    if (r === 'venue') setRole('VENUE')
+  }, [searchParams])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,10 +43,24 @@ export default function SignupPage() {
       return
     }
     try {
+      // Build a proper redirect origin for the verification link.
+      // Prefer an explicit NEXT_PUBLIC_SITE_URL, then Vercel preview URL, then window.location.origin.
+      const envSite = process.env.NEXT_PUBLIC_SITE_URL
+      const vercel = process.env.NEXT_PUBLIC_VERCEL_URL
+      const origin = envSite && envSite.startsWith('http')
+        ? envSite
+        : vercel
+        ? `https://${vercel}`
+        : typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:3000'
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          // ensure the verification link sent by Supabase points back to the deployed site
+          emailRedirectTo: origin,
           data: {
             role
           }
@@ -50,10 +72,14 @@ export default function SignupPage() {
         return
       }
 
-        if (data.user) {
-          // After signup send user to dashboard to create profiles
-          router.push('/dashboard')
-        }
+      // If Supabase returns an authenticated user (not using email confirmation), go to dashboard.
+      if (data?.user) {
+        router.push('/dashboard')
+        return
+      }
+
+      // Otherwise an email confirmation was sent — show a friendly message.
+      setSuccessMessage(`A verification link has been sent to ${email}. Please check your inbox; the link will return you to ${origin}.`)
     } catch (err) {
       setError('An unexpected error occurred')
     } finally {
@@ -76,7 +102,18 @@ export default function SignupPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-6">
+          {successMessage ? (
+            <div className="space-y-4 text-center">
+              <div className="text-green-700">{successMessage}</div>
+              <div className="text-sm text-gray-600">If you don't see the email, check your spam folder.</div>
+              <div className="mt-4">
+                <Link href="/login">
+                  <Button variant="outline">Back to Sign In</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSignup} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                 {error}
@@ -89,30 +126,26 @@ export default function SignupPage() {
                 I am an...
               </label>
               <div className="grid grid-cols-2 gap-3">
-                <button
+                <Button
                   type="button"
+                  variant={role === 'BAND' ? 'austin' : 'outline'}
+                  size="lg"
                   onClick={() => setRole('BAND')}
-                  className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                    role === 'BAND'
-                      ? 'border-austin-orange bg-austin-orange/10 text-austin-orange'
-                      : 'border-gray-200 hover:border-austin-orange/50'
-                  }`}
+                  className="flex flex-col items-center justify-center p-4"
                 >
                   <div className="text-2xl mb-1">🎵</div>
                   <div className="font-medium">Artist</div>
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant={role === 'VENUE' ? 'austin' : 'outline'}
+                  size="lg"
                   onClick={() => setRole('VENUE')}
-                  className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                    role === 'VENUE'
-                      ? 'border-austin-orange bg-austin-orange/10 text-austin-orange'
-                      : 'border-gray-200 hover:border-austin-orange/50'
-                  }`}
+                  className="flex flex-col items-center justify-center p-4"
                 >
                   <div className="text-2xl mb-1">🏛️</div>
                   <div className="font-medium">Venue</div>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -165,15 +198,16 @@ export default function SignupPage() {
               />
             </div>
 
-            <Button
-              type="submit"
-              variant="austin"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                variant="austin"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+          )}
 
           {/* Footer */}
           <div className="mt-8 text-center space-y-4">
