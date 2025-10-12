@@ -227,7 +227,6 @@ export default function Home() {
               </h3>
               <p className="text-xl mb-10 text-gray-200 leading-relaxed">
                 Get started in less than 3 minutes and start connecting with the local scene. 
-                Over 500 bands and 100 venues are already here.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Link href="/signup">
@@ -243,7 +242,7 @@ export default function Home() {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="w-full sm:w-auto text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-austin-charcoal"
+                  className="w-full sm:w-auto text-lg px-8 py-6 border-white text-black hover:bg-white hover:text-austin-charcoal"
                 >
                   Watch Demo
                 </Button>
