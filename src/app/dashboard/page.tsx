@@ -138,72 +138,65 @@ export default async function DashboardPage() {
         })
       }
     } else if (userRole === 'VENUE') {
-  const { data: venueProfile } = await supabase
-  .from('venue_profiles') 
-  .select('*')
-  .eq('userId', resolvedDbUser.id)
-  .single()
-      
-      console.log('Dashboard: Found venue profile:', venueProfile)
-      
-      if (venueProfile) {
-        hasProfile = true
-        profileData = venueProfile
+      // Debugging: Confirm user role and venue profile
+      console.log('User Role:', userRole);
+      if (userRole === 'VENUE') {
+        console.log('Fetching venue profile...');
+        const { data: venueProfile } = await supabase
+          .from('venue_profiles')
+          .select('*')
+          .eq('userId', resolvedDbUser.id)
+          .single();
 
-        // Get recent applications to this venue's slots
-        const { data: applications } = await supabase
-          .from('applications')
-          .select(`
-            id,
-            status,
-            createdAt,
-            band_profiles:bandProfileId (
-              bandName
-            ),
-            venue_slots:venueSlotId (
-              eventDate,
-              eventTitle
-            )
-          `)
-          .eq('venue_slots.venueProfileId', venueProfile.id)
-          .order('createdAt', { ascending: false })
-          .limit(5)
+        console.log('Venue Profile:', venueProfile);
 
-        recentActivity = (applications || []).map((app: any) => ({
-          type: 'application_received',
-          status: app.status,
-          bandName: app.band_profiles.bandName,
-          eventTitle: app.venue_slots.eventTitle,
-          eventDate: app.venue_slots.eventDate,
-          createdAt: app.createdAt
-        }))
+        if (venueProfile) {
+          hasProfile = true;
+          profileData = venueProfile;
 
-        // Get upcoming booked slots
-        const { data: bookedSlots } = await supabase
-          .from('venue_slots')
-          .select(`
-            eventDate,
-            startTime,
-            eventTitle,
-            applications (
+          // Fetch recent applications for the venue's slots
+          const { data: applications } = await supabase
+            .from('applications')
+            .select(`
+              id,
+              status,
+              createdAt,
+              proposedFee,
               band_profiles:bandProfileId (
                 bandName
+              ),
+              venue_slots:venueSlotId (
+                eventDate,
+                eventTitle
               )
-            )
-          `)
-          .eq('venueProfileId', venueProfile.id)
-          .eq('status', 'BOOKED')
-          .gte('eventDate', new Date().toISOString().split('T')[0])
-          .order('eventDate', { ascending: true })
-          .limit(3)
+            `)
+            .eq('venue_slots.venueProfileId', venueProfile.id)
+            .order('createdAt', { ascending: false })
+            .limit(5);
 
-        upcomingGigs = (bookedSlots || []).map((slot: any) => ({
-          ...slot,
-          applications: (slot.applications || []).map((app: any) => ({
-            ...app,
-            band_profiles: Array.isArray(app.band_profiles) ? app.band_profiles[0] ?? null : app.band_profiles ?? null
-          }))
-        }))
+          console.log('Venue Recent Activity - Applications:', applications);
+
+          // Map applications to recent activity format
+          recentActivity = (applications || []).map((app: any) => {
+            const venueSlot = app.venue_slots || {}; // Default to an empty object if null
+            const bandProfile = app.band_profiles || {}; // Default to an empty object if null
+            console.log('Mapping Application:', {
+              status: app.status,
+              bandName: bandProfile.bandName,
+              eventTitle: venueSlot.eventTitle,
+              eventDate: venueSlot.eventDate,
+              createdAt: app.createdAt,
+            });
+            return {
+              type: 'application',
+              status: app.status,
+              bandName: bandProfile.bandName || 'Unknown Band',
+              eventTitle: venueSlot.eventTitle || 'TBD',
+              eventDate: venueSlot.eventDate || null,
+              createdAt: app.createdAt,
+            };
+          });
+        }
       }
     }
   }
@@ -214,6 +207,16 @@ export default async function DashboardPage() {
     await supabase.auth.signOut()
     redirect('/')
   }
+
+  // Filter recentActivity based on userRole
+  const filteredActivity = recentActivity.filter((activity: any) => {
+    if (userRole === 'BAND') {
+      return activity.bandId === user.id; // Ensure activity is related to the current band
+    } else if (userRole === 'VENUE') {
+      return activity.type === 'application'; // Include all applications for the venue
+    }
+    return false;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -327,9 +330,9 @@ export default async function DashboardPage() {
               {/* Recent Activity */}
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h3 className="text-lg font-semibold text-austin-charcoal mb-4">Recent Activity</h3>
-                {recentActivity.length > 0 ? (
+                {filteredActivity.length > 0 ? (
                   <div className="space-y-3">
-                    {recentActivity.map((activity: any, index: number) => (
+                    {filteredActivity.map((activity: any, index: number) => (
                       <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                         <div className={`w-2 h-2 rounded-full mt-2 ${
                           activity.status === 'ACCEPTED' ? 'bg-green-500' :
@@ -337,15 +340,10 @@ export default async function DashboardPage() {
                           'bg-yellow-500'
                         }`}></div>
                         <div className="flex-1">
-                          {activity.type === 'application' ? (
-                            <p className="text-sm">
-                              <span className="font-medium">Application {activity.status.toLowerCase()}</span> for "{activity.eventTitle}" at {activity.venueName}
-                            </p>
-                          ) : (
-                            <p className="text-sm">
-                              <span className="font-medium">New application</span> from {activity.bandName} for "{activity.eventTitle}"
-                            </p>
-                          )}
+                          <p className="text-sm">
+                            <span className="font-medium">Application {activity.status.toLowerCase()}</span> from 
+                            <a href={`/bands/${activity.bandId}`} className="text-austin-orange hover:underline">{activity.bandName}</a> for slot "{activity.eventTitle}"
+                          </p>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(activity.createdAt).toLocaleDateString()}
                           </p>
@@ -472,6 +470,13 @@ export default async function DashboardPage() {
                     Complete Your Profile
                   </Button>
                 </Link>
+                
+                <div className="text-sm text-gray-500">
+                  User ID: {user.id}
+                  <Button variant="austin" size="lg">
+                    Complete Your Profile
+                  </Button>
+                </div>
                 
                 <div className="text-sm text-gray-500">
                   User ID: {user.id}

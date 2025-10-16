@@ -20,6 +20,7 @@ model User {
   receivedMessages Message[]     @relation("MessageReceiver")
   sentMessages     Message[]     @relation("MessageSender")
   venueProfile     VenueProfile?
+  emailAlertsEnabled Boolean       @default(false) // Field to store email alert preferences
 
   @@index([email])
   @@index([supabaseId], map: "users_supabaseid_idx")

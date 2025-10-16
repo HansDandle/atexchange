@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-type UserRole = 'BAND' | 'VENUE'
+type UserRole = 'BAND' | 'VENUE' | 'DJ' | 'TRIVIA_HOST' | 'PHOTOGRAPHER' | 'OTHER' // Expanded UserRole type
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -101,7 +101,6 @@ export default function SignupPage() {
             </p>
           </div>
 
-          {/* Form */}
           {successMessage ? (
             <div className="space-y-4 text-center">
               <div className="text-green-700">{successMessage}</div>
@@ -120,12 +119,12 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Role Selection: Artist or Venue */}
+            {/* Role Selection: Artist, Venue, DJ, Trivia Host, Photographer, Other Creative */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 I am an...
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
                   variant={role === 'BAND' ? 'austin' : 'outline'}
@@ -146,67 +145,103 @@ export default function SignupPage() {
                   <div className="text-2xl mb-1">🏛️</div>
                   <div className="font-medium">Venue</div>
                 </Button>
+                <Button
+                  type="button"
+                  variant={role === 'DJ' ? 'austin' : 'outline'}
+                  size="lg"
+                  onClick={() => setRole('DJ')}
+                  className="flex flex-col items-center justify-center p-4"
+                >
+                  <div className="text-2xl mb-1">🎧</div>
+                  <div className="font-medium">DJ</div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={role === 'TRIVIA_HOST' ? 'austin' : 'outline'}
+                  size="lg"
+                  onClick={() => setRole('TRIVIA_HOST')}
+                  className="flex flex-col items-center justify-center p-4"
+                >
+                  <div className="text-2xl mb-1">❓</div>
+                  <div className="font-medium">Trivia Host</div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={role === 'PHOTOGRAPHER' ? 'austin' : 'outline'}
+                  size="lg"
+                  onClick={() => setRole('PHOTOGRAPHER')}
+                  className="flex flex-col items-center justify-center p-4"
+                >
+                  <div className="text-2xl mb-1">📸</div>
+                  <div className="font-medium">Photographer</div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={role === 'OTHER' ? 'austin' : 'outline'}
+                  size="lg"
+                  onClick={() => setRole('OTHER')}
+                  className="flex flex-col items-center justify-center p-4"
+                >
+                  <div className="text-2xl mb-1">✨</div>
+                  <div className="font-medium">Other Creative</div>
+                </Button>
               </div>
             </div>
 
-            {/* Name is collected during onboarding; signup only asks for email & password */}
-
+            {/* Email and Password Fields */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email address
               </label>
               <input
-                id="email"
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-austin-orange transition-colors"
-                placeholder="your@email.com"
+                required
+                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-austin-orange focus:border-transparent"
+                placeholder="you@example.com"
               />
             </div>
-
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
-                id="password"
                 type="password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-austin-orange transition-colors"
+                required
+                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-austin-orange focus:border-transparent"
                 placeholder="••••••••"
-                minLength={6}
               />
             </div>
-
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
               <input
-                id="confirmPassword"
                 type="password"
-                required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-austin-orange transition-colors"
+                required
+                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-austin-orange focus:border-transparent"
                 placeholder="••••••••"
-                minLength={6}
               />
             </div>
 
+            {/* Submit Button */}
+            <div>
               <Button
                 type="submit"
                 variant="austin"
+                size="lg"
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Creating account...' : 'Sign Up'}
               </Button>
-            </form>
+            </div>
+          </form>
           )}
 
           {/* Footer */}

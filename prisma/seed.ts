@@ -1,13 +1,23 @@
 import { PrismaClient } from '@prisma/client'
 import { createHash } from 'crypto'
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' }); // Explicitly load .env.local
 
 const prisma = new PrismaClient()
 
-// Define the UserRole enum locally since it's generated
+// Debug log to check if DATABASE_URL is loaded
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+ // Define the UserRole enum locally since it's generated
 enum UserRole {
   BAND = 'BAND',
   VENUE = 'VENUE',
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  DJ = 'DJ',
+  TRIVIA_HOST = 'TRIVIA_HOST',
+  PHOTOGRAPHER = 'PHOTOGRAPHER',
+  OTHER = 'OTHER',
 }
 
 async function main() {
@@ -312,6 +322,44 @@ async function main() {
         },
       })
     }
+  }
+
+  // Add new roles to the seed data
+  const otherRoles = [
+    {
+      email: 'dj@austindj.com',
+      name: 'Austin DJ',
+      role: UserRole.DJ,
+    },
+    {
+      email: 'trivia@austintrivia.com',
+      name: 'Austin Trivia Host',
+      role: UserRole.TRIVIA_HOST,
+    },
+    {
+      email: 'photo@austinphotos.com',
+      name: 'Austin Photographer',
+      role: UserRole.PHOTOGRAPHER,
+    },
+    {
+      email: 'creative@austincreatives.com',
+      name: 'Austin Creative',
+      role: UserRole.OTHER,
+    },
+  ];
+
+  // Create users for new roles
+  for (const role of otherRoles) {
+    console.log(`Creating user: ${role.name}`);
+
+    await prisma.user.create({
+      data: {
+        email: role.email,
+        name: role.name,
+        role: role.role,
+        supabaseId: createHash('md5').update(role.email).digest('hex'), // Temporary ID
+      },
+    });
   }
 
   console.log('✅ Database seeded successfully!')
