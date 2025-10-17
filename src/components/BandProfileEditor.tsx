@@ -36,6 +36,12 @@ const GENRES = [
 ]
 
 export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
+  const slugify = (s: string) => s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+
   const [formData, setFormData] = useState({
     bandName: profile.bandName || '',
     bio: profile.bio || '',
@@ -133,6 +139,7 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
     try {
       const updateData = {
         bandName: formData.bandName,
+        slug: formData.bandName ? slugify(formData.bandName) : null,
         bio: formData.bio || null,
         genre: formData.genre.length > 0 ? formData.genre : null,
         location: formData.location || null,

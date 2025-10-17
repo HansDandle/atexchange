@@ -44,6 +44,7 @@ export default async function SlotsPage() {
       eventTitle,
       description,
       genrePrefs,
+      talentTypes,
       status,
       createdAt
     `)

@@ -17,7 +17,7 @@ enum UserRole {
   DJ = 'DJ',
   TRIVIA_HOST = 'TRIVIA_HOST',
   PHOTOGRAPHER = 'PHOTOGRAPHER',
-  OTHER = 'OTHER',
+  OTHER_CREATIVE = 'OTHER_CREATIVE',
 }
 
 async function main() {
@@ -330,36 +330,102 @@ async function main() {
       email: 'dj@austindj.com',
       name: 'Austin DJ',
       role: UserRole.DJ,
+      profileData: {
+        djName: 'Austin DJ Pro',
+        bio: 'House and electronic music specialist with 8 years of experience',
+        specialization: ['House', 'Electronic', 'Techno'],
+        experience: '8 years of DJing at Austin venues',
+        location: 'Austin, TX',
+        minFee: 150,
+        maxFee: 500,
+        equipment: 'Own equipment',
+      }
     },
     {
       email: 'trivia@austintrivia.com',
       name: 'Austin Trivia Host',
       role: UserRole.TRIVIA_HOST,
+      profileData: {
+        hostName: 'Trivia Master Austin',
+        bio: 'Music and pop culture trivia expert',
+        specialization: 'Music Trivia',
+        experience: '5 years of hosting trivia nights',
+        location: 'Austin, TX',
+        rates: 100,
+      }
     },
     {
       email: 'photo@austinphotos.com',
       name: 'Austin Photographer',
       role: UserRole.PHOTOGRAPHER,
+      profileData: {
+        photographerName: 'Austin Photo Co',
+        bio: 'Professional photographer specializing in live music and events',
+        specialization: ['Events', 'Music', 'Portraits'],
+        experience: '10 years of professional photography',
+        location: 'Austin, TX',
+        rates: 200,
+      }
     },
     {
       email: 'creative@austincreatives.com',
       name: 'Austin Creative',
-      role: UserRole.OTHER,
+      role: UserRole.OTHER_CREATIVE,
+      profileData: {
+        creativeName: 'Austin Sound Design',
+        bio: 'Sound designer and audio producer for events and studio work',
+        creativeType: 'Sound Designer',
+        specialization: 'Audio Production and Event Sound Design',
+        experience: '7 years of audio production',
+        location: 'Austin, TX',
+        rates: 150,
+      }
     },
   ];
 
-  // Create users for new roles
-  for (const role of otherRoles) {
-    console.log(`Creating user: ${role.name}`);
+  // Create users and profiles for new roles
+  for (const roleData of otherRoles) {
+    console.log(`Creating user and profile: ${roleData.name}`);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
-        email: role.email,
-        name: role.name,
-        role: role.role,
-        supabaseId: createHash('md5').update(role.email).digest('hex'), // Temporary ID
+        email: roleData.email,
+        name: roleData.name,
+        role: roleData.role,
+        supabaseId: createHash('md5').update(roleData.email).digest('hex'), // Temporary ID
       },
     });
+
+    // Create appropriate profile based on role
+    if (roleData.role === UserRole.DJ) {
+      await prisma.dJProfile.create({
+        data: {
+          userId: user.id,
+          ...(roleData.profileData as any),
+        },
+      });
+      } else if (roleData.role === UserRole.TRIVIA_HOST) {
+      await prisma.triviaHostProfile.create({
+        data: {
+          userId: user.id,
+          ...(roleData.profileData as any),
+        },
+      });
+    } else if (roleData.role === UserRole.PHOTOGRAPHER) {
+      await prisma.photographerProfile.create({
+        data: {
+          userId: user.id,
+          ...(roleData.profileData as any),
+        },
+      });
+    } else if (roleData.role === UserRole.OTHER_CREATIVE) {
+      await prisma.otherCreativeProfile.create({
+        data: {
+          userId: user.id,
+          ...(roleData.profileData as any),
+        },
+      });
+    }
   }
 
   console.log('✅ Database seeded successfully!')

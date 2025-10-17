@@ -2,6 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import BandProfileEditor from '@/components/BandProfileEditor'
 import VenueProfileEditor from '@/components/VenueProfileEditor'
+import TriviaHostProfileEditor from '@/components/TriviaHostProfileEditor'
+import DJProfileEditor from '@/components/DJProfileEditor'
+import PhotographerProfileEditor from '@/components/PhotographerProfileEditor'
+import OtherCreativeProfileEditor from '@/components/OtherCreativeProfileEditor'
+import PublicProfileLink from '@/components/PublicProfileLink'
 
 export default async function EditProfilePage() {
   const supabase = createClient()
@@ -12,12 +17,33 @@ export default async function EditProfilePage() {
     redirect('/login')
   }
 
-  // Get user role and profile
-  const { data: dbUser } = await supabase
+  // Get user role and profile (try supabaseId first, then fall back to email)
+  let dbUser: any = null
+
+  const supabaseIdLookup = await supabase
     .from('users')
-    .select('id, role')
+    .select('id, role, email')
     .eq('supabaseId', user.id)
-    .single()
+    .maybeSingle()
+
+  if (supabaseIdLookup.error) {
+    // keep trying with email fallback
+  }
+  dbUser = supabaseIdLookup.data ?? null
+
+  if (!dbUser) {
+    const emailLookup = await supabase
+      .from('users')
+      .select('id, role, email')
+      .eq('email', user.email)
+      .maybeSingle()
+
+    if (emailLookup.error) {
+      redirect('/dashboard')
+    }
+
+    dbUser = emailLookup.data ?? null
+  }
 
   if (!dbUser) {
     redirect('/dashboard')
@@ -39,7 +65,7 @@ export default async function EditProfilePage() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-austin-charcoal">
                 Edit Band Profile
               </h1>
@@ -47,6 +73,7 @@ export default async function EditProfilePage() {
                 Back to Dashboard
               </a>
             </div>
+            <PublicProfileLink profile={firstProfile} role={'BAND'} />
           </div>
         </header>
 
@@ -84,7 +111,7 @@ export default async function EditProfilePage() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-austin-charcoal">
                 Edit Venue Profile
               </h1>
@@ -92,11 +119,133 @@ export default async function EditProfilePage() {
                 Back to Dashboard
               </a>
             </div>
+            <PublicProfileLink profile={venueProfile} role={'VENUE'} />
           </div>
         </header>
 
         <main className="container mx-auto px-4 py-8">
           <VenueProfileEditor profile={venueProfile} />
+        </main>
+      </div>
+    )
+  }
+
+  // TRIVIA_HOST: render trivia host profile editor
+  if (dbUser.role === 'TRIVIA_HOST') {
+    const { data: triviaProfile } = await supabase
+      .from('trivia_host_profiles')
+      .select('*')
+      .eq('userId', dbUser.id)
+      .single()
+
+    if (!triviaProfile) {
+      redirect('/dashboard')
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-austin-charcoal">Edit Trivia Host Profile</h1>
+              <a href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">Back to Dashboard</a>
+            </div>
+            <PublicProfileLink profile={triviaProfile} role={'TRIVIA_HOST'} />
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <TriviaHostProfileEditor profile={triviaProfile} />
+        </main>
+      </div>
+    )
+  }
+
+  if (dbUser.role === 'DJ') {
+    const { data: djProfile } = await supabase
+      .from('dj_profiles')
+      .select('*')
+      .eq('userId', dbUser.id)
+      .single()
+
+    if (!djProfile) {
+      redirect('/dashboard')
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-austin-charcoal">Edit DJ Profile</h1>
+              <a href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">Back to Dashboard</a>
+            </div>
+            <PublicProfileLink profile={djProfile} role={'DJ'} />
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <DJProfileEditor profile={djProfile} />
+        </main>
+      </div>
+    )
+  }
+
+  if (dbUser.role === 'PHOTOGRAPHER') {
+    const { data: photographerProfile } = await supabase
+      .from('photographer_profiles')
+      .select('*')
+      .eq('userId', dbUser.id)
+      .single()
+
+    if (!photographerProfile) {
+      redirect('/dashboard')
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-austin-charcoal">Edit Photographer Profile</h1>
+              <a href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">Back to Dashboard</a>
+            </div>
+            <PublicProfileLink profile={photographerProfile} role={'PHOTOGRAPHER'} />
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <PhotographerProfileEditor profile={photographerProfile} />
+        </main>
+      </div>
+    )
+  }
+
+  if (dbUser.role === 'OTHER_CREATIVE') {
+    const { data: otherProfile } = await supabase
+      .from('other_creative_profiles')
+      .select('*')
+      .eq('userId', dbUser.id)
+      .single()
+
+    if (!otherProfile) {
+      redirect('/dashboard')
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-austin-charcoal">Edit Profile</h1>
+              <a href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">Back to Dashboard</a>
+            </div>
+            <PublicProfileLink profile={otherProfile} role={'OTHER_CREATIVE'} />
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <OtherCreativeProfileEditor profile={otherProfile} />
         </main>
       </div>
     )

@@ -198,6 +198,54 @@ export default async function DashboardPage() {
           });
         }
       }
+    } else if (userRole === 'TRIVIA_HOST') {
+      const { data: triviaProfile } = await supabase
+        .from('trivia_host_profiles')
+        .select('*')
+        .eq('userId', resolvedDbUser.id)
+        .single()
+
+      if (triviaProfile) {
+        hasProfile = true
+        profileData = triviaProfile
+        console.log('Dashboard: Found trivia host profile:', triviaProfile)
+      }
+    } else if (userRole === 'DJ') {
+      const { data: djProfile } = await supabase
+        .from('dj_profiles')
+        .select('*')
+        .eq('userId', resolvedDbUser.id)
+        .single()
+
+      if (djProfile) {
+        hasProfile = true
+        profileData = djProfile
+        console.log('Dashboard: Found DJ profile:', djProfile)
+      }
+    } else if (userRole === 'PHOTOGRAPHER') {
+      const { data: photographerProfile } = await supabase
+        .from('photographer_profiles')
+        .select('*')
+        .eq('userId', resolvedDbUser.id)
+        .single()
+
+      if (photographerProfile) {
+        hasProfile = true
+        profileData = photographerProfile
+        console.log('Dashboard: Found photographer profile:', photographerProfile)
+      }
+    } else if (userRole === 'OTHER_CREATIVE') {
+      const { data: otherCreativeProfile } = await supabase
+        .from('other_creative_profiles')
+        .select('*')
+        .eq('userId', resolvedDbUser.id)
+        .single()
+
+      if (otherCreativeProfile) {
+        hasProfile = true
+        profileData = otherCreativeProfile
+        console.log('Dashboard: Found other creative profile:', otherCreativeProfile)
+      }
     }
   }
   
@@ -261,11 +309,15 @@ export default async function DashboardPage() {
             <div className="space-y-6">
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h2 className="text-2xl font-bold text-austin-charcoal mb-4">
-                  Welcome back, {profileData?.bandName || profileData?.venueName || user.user_metadata?.name}!
+                  Welcome back, {profileData?.bandName || profileData?.venueName || profileData?.hostName || profileData?.djName || profileData?.photographerName || profileData?.creativeName || user.user_metadata?.name}!
                 </h2>
                 <p className="text-gray-600 mb-4">
                   {userRole === 'BAND' ? 'Your band profile is complete. Start browsing available gigs!' : 
-                   userRole === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' : 
+                   userRole === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' :
+                   userRole === 'TRIVIA_HOST' ? 'Your trivia host profile is set up! Browse available venues and events.' :
+                   userRole === 'DJ' ? 'Your DJ profile is ready! Start looking for gigs and events.' :
+                   userRole === 'PHOTOGRAPHER' ? 'Your photographer portfolio is live! Find your next photo opportunity.' :
+                   userRole === 'OTHER_CREATIVE' ? 'Your profile is complete. Discover amazing opportunities!' :
                    userRole === 'ADMIN' ? 'Welcome to the admin dashboard. Manage users, profiles, and platform data.' :
                    'Your profile is set up and ready to go.'}
                 </p>
@@ -273,29 +325,111 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {userRole === 'BAND' ? (
                     <>
-                      <a href="/gigs">
+                      <Link href="/gigs">
                         <Button variant="austin" size="lg" className="w-full">
                           Browse Available Gigs
                         </Button>
-                      </a>
-                      <a href="/profile/edit">
+                      </Link>
+                      <Link href="/profile/edit">
                         <Button variant="outline" size="lg" className="w-full">
                           Edit Band Profile
                         </Button>
-                      </a>
+                      </Link>
+                      <Link href={profileData?.slug ? `/profiles/${profileData.slug}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
                     </>
                   ) : userRole === 'VENUE' ? (
                     <>
-                      <a href="/slots">
+                      <Link href="/slots">
                         <Button variant="austin" size="lg" className="w-full">
                           Manage Available Slots
                         </Button>
-                      </a>
-                      <a href="/profile/edit">
+                      </Link>
+                      <Link href="/profile/edit">
                         <Button variant="outline" size="lg" className="w-full">
                           Edit Venue Profile
                         </Button>
-                      </a>
+                      </Link>
+                      <Link href={profileData?.id ? `/venues/${profileData.id}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
+                    </>
+                  ) : userRole === 'TRIVIA_HOST' ? (
+                    <>
+                      <Link href="/profile/edit">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Edit Trivia Host Profile
+                        </Button>
+                      </Link>
+                      <Link href="/opportunities">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Browse Opportunities
+                        </Button>
+                      </Link>
+                      <Link href={profileData?.slug ? `/profiles/${profileData.slug}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
+                    </>
+                  ) : userRole === 'DJ' ? (
+                    <>
+                      <Link href="/profile/edit">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Edit DJ Profile
+                        </Button>
+                      </Link>
+                      <Link href="/opportunities">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Find Gigs
+                        </Button>
+                      </Link>
+                      <Link href={profileData?.slug ? `/profiles/${profileData.slug}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
+                    </>
+                  ) : userRole === 'PHOTOGRAPHER' ? (
+                    <>
+                      <Link href="/profile/edit">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Edit Portfolio
+                        </Button>
+                      </Link>
+                      <Link href="/opportunities">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Find Photo Opportunities
+                        </Button>
+                      </Link>
+                      <Link href={profileData?.slug ? `/profiles/${profileData.slug}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
+                    </>
+                  ) : userRole === 'OTHER_CREATIVE' ? (
+                    <>
+                      <Link href="/profile/edit">
+                        <Button variant="austin" size="lg" className="w-full">
+                          Edit Profile
+                        </Button>
+                      </Link>
+                      <Link href="/opportunities">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Find Opportunities
+                        </Button>
+                      </Link>
+                      <Link href={profileData?.slug ? `/profiles/${profileData.slug}` : '/profile/edit'}>
+                        <Button variant="ghost" size="lg" className="w-full">
+                          View My Profile
+                        </Button>
+                      </Link>
                     </>
                   ) : null}
                 </div>
@@ -305,24 +439,17 @@ export default async function DashboardPage() {
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h3 className="text-lg font-semibold text-austin-charcoal mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <a href="/messages">
+                  <Link href="/messages">
                     <Button variant="outline" className="w-full">
                       Messages
                     </Button>
-                  </a>
-                  {userRole === 'BAND' && (
-                    <a href="/gigs">
-                      <Button variant="outline" className="w-full">
-                        Find More Gigs
-                      </Button>
-                    </a>
-                  )}
+                  </Link>
                   {userRole === 'VENUE' && (
-                    <a href="/slots">
+                    <Link href="/slots">
                       <Button variant="outline" className="w-full">
                         Add More Slots
                       </Button>
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -451,6 +578,46 @@ export default async function DashboardPage() {
                     <p><strong>Genre Preferences:</strong> {profileData.genrePrefs?.join(', ') || 'All genres'}</p>
                   </div>
                 )}
+                {userRole === 'TRIVIA_HOST' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Name:</strong> {profileData.hostName}</p>
+                    <p><strong>Specialization:</strong> {profileData.specialization || 'General trivia'}</p>
+                    <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
+                    <p><strong>Experience:</strong> {profileData.experience || 'Not specified'}</p>
+                    <p><strong>Rate:</strong> {profileData.rates ? `$${profileData.rates}/event` : 'Negotiable'}</p>
+                  </div>
+                )}
+                {userRole === 'DJ' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Name:</strong> {profileData.djName}</p>
+                    <p><strong>Specialization:</strong> {profileData.specialization?.join(', ') || 'General DJ services'}</p>
+                    <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
+                    <p><strong>Experience:</strong> {profileData.experience || 'Not specified'}</p>
+                    <p><strong>Rate Range:</strong> {
+                      profileData.minFee && profileData.maxFee 
+                        ? `$${profileData.minFee} - $${profileData.maxFee}`
+                        : 'Negotiable'
+                    }</p>
+                  </div>
+                )}
+                {userRole === 'PHOTOGRAPHER' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Name:</strong> {profileData.photographerName}</p>
+                    <p><strong>Specialization:</strong> {profileData.specialization?.join(', ') || 'General photography'}</p>
+                    <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
+                    <p><strong>Experience:</strong> {profileData.experience || 'Not specified'}</p>
+                    <p><strong>Rate:</strong> {profileData.rates ? `$${profileData.rates}/session` : 'Negotiable'}</p>
+                  </div>
+                )}
+                {userRole === 'OTHER_CREATIVE' && profileData && (
+                  <div className="space-y-2">
+                    <p><strong>Name:</strong> {profileData.creativeName}</p>
+                    <p><strong>Creative Type:</strong> {profileData.creativeType || 'Unspecified'}</p>
+                    <p><strong>Location:</strong> {profileData.location || 'Not specified'}</p>
+                    <p><strong>Experience:</strong> {profileData.experience || 'Not specified'}</p>
+                    <p><strong>Rate:</strong> {profileData.rates ? `$${profileData.rates}/project` : 'Negotiable'}</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -470,13 +637,6 @@ export default async function DashboardPage() {
                     Complete Your Profile
                   </Button>
                 </Link>
-                
-                <div className="text-sm text-gray-500">
-                  User ID: {user.id}
-                  <Button variant="austin" size="lg">
-                    Complete Your Profile
-                  </Button>
-                </div>
                 
                 <div className="text-sm text-gray-500">
                   User ID: {user.id}

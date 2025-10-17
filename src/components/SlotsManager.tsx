@@ -21,6 +21,7 @@ interface VenueSlot {
   eventTitle: string | null
   description: string | null
   genrePrefs: string[] | null
+  talentTypes: string[] | null
   status: string
   createdAt: string
 }
@@ -72,7 +73,8 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
     endTime: '',
     eventTitle: '',
     description: '',
-    genrePrefs: [] as string[]
+    genrePrefs: [] as string[],
+    talentTypes: ['BAND'] as string[]
   })
 
   const resetForm = () => {
@@ -82,7 +84,8 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
       endTime: '',
       eventTitle: '',
       description: '',
-      genrePrefs: []
+      genrePrefs: [],
+      talentTypes: ['BAND']
     })
   }
 
@@ -124,6 +127,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
           eventTitle: formData.eventTitle || null,
           description: formData.description || null,
           genrePrefs: formData.genrePrefs.length > 0 ? formData.genrePrefs : null,
+          talentTypes: formData.talentTypes.length > 0 ? formData.talentTypes : ['BAND'],
           status: 'AVAILABLE'
         })
         .select()
@@ -164,7 +168,8 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
           endTime: endDateTime,
           eventTitle: formData.eventTitle || null,
           description: formData.description || null,
-          genrePrefs: formData.genrePrefs.length > 0 ? formData.genrePrefs : null
+          genrePrefs: formData.genrePrefs.length > 0 ? formData.genrePrefs : null,
+          talentTypes: formData.talentTypes.length > 0 ? formData.talentTypes : ['BAND']
         })
         .eq('id', editingSlot.id)
 
@@ -266,7 +271,8 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
       endTime: slot.endTime ? new Date(slot.endTime).toTimeString().slice(0, 5) : '',
       eventTitle: slot.eventTitle || '',
       description: slot.description || '',
-      genrePrefs: slot.genrePrefs || []
+      genrePrefs: slot.genrePrefs || [],
+      talentTypes: slot.talentTypes || ['BAND']
     })
   }
 
@@ -601,11 +607,48 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                   Description
                 </label>
                 <Textarea
-                  placeholder="Tell bands what you're looking for..."
+                  placeholder="Tell talent what you're looking for..."
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Looking For (Talent Types)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                  {['BAND', 'TRIVIA_HOST', 'DJ', 'PHOTOGRAPHER', 'OTHER_CREATIVE'].map((type) => (
+                    <label key={type} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.talentTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({ 
+                              ...formData, 
+                              talentTypes: [...formData.talentTypes, type] 
+                            })
+                          } else {
+                            setFormData({ 
+                              ...formData, 
+                              talentTypes: formData.talentTypes.filter(t => t !== type) 
+                            })
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{
+                        type === 'BAND' ? 'Band' :
+                        type === 'TRIVIA_HOST' ? 'Trivia Host' :
+                        type === 'DJ' ? 'DJ' :
+                        type === 'PHOTOGRAPHER' ? 'Photographer' :
+                        'Other Creative'
+                      }</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div>
