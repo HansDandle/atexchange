@@ -73,11 +73,10 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
 
   const uploadFiles = async (files: FileList | null, type: 'photos' | 'audioSamples') => {
     if (!files || files.length === 0) return []
-    
+
     setUploading(true)
-    const supabase = createClient()
     const urls: string[] = []
-    
+
     // Enforce 5-photo limit for photos
     if (type === 'photos') {
       const existing = formData.photos.length
@@ -89,26 +88,25 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
     }
 
     for (const file of Array.from(files)) {
-      const bucket = type === 'photos' ? 'bands' : 'bands'
-      const key = `${type}/${Date.now()}-${file.name}`
-      
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(key, file)
-      
-      if (error) {
-        console.error('Upload error:', error)
-        alert(`Upload failed: ${error.message}`)
-        continue
+      try {
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('type', type)
+
+        const res = await fetch('/api/profiles/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (!res.ok) {
+          console.error('Upload failed', json)
+          alert(`Upload failed: ${json?.error || res.statusText}`)
+          continue
+        }
+        urls.push(json.publicUrl)
+      } catch (err) {
+        console.error('Upload exception', err)
+        alert('Upload failed. Please try again.')
       }
-      
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path)
-      
-      urls.push(urlData.publicUrl)
     }
-    
+
     setUploading(false)
     return urls
   }
@@ -139,7 +137,7 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
     try {
       const updateData = {
         bandName: formData.bandName,
-        slug: formData.bandName ? slugify(formData.bandName) : null,
+        name: formData.bandName,
         bio: formData.bio || null,
         genre: formData.genre.length > 0 ? formData.genre : null,
         location: formData.location || null,
@@ -155,14 +153,19 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
         audioSamples: formData.audioSamples.length > 0 ? formData.audioSamples : null
       }
 
-      const { error } = await supabase
-        .from('band_profiles')
-        .update(updateData)
-        .eq('id', profile.id)
+      const res = await fetch('/api/profiles/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileType: 'band_profiles', profileId: profile.id, payload: updateData })
+      })
 
-      if (error) throw error
-
-      alert('Profile updated successfully!')
+      const json = await res.json()
+      if (!res.ok) {
+        console.error('Save failed', json)
+        alert(`Failed to save profile: ${json?.error || res.statusText}`)
+      } else {
+        alert('Profile updated successfully!')
+      }
 
     } catch (error) {
       console.error('Error updating profile:', error)

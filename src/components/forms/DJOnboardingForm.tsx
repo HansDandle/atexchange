@@ -73,34 +73,25 @@ export default function DJOnboardingForm({ onComplete, initialData }: DJOnboardi
         return
       }
 
-      // First, ensure user exists in users table
-      const { error: userError } = await supabase
-        .from('users')
-        .upsert({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name,
-          role: 'DJ'
-        }, {
-          onConflict: 'id'
-        })
+      // Ensure user exists in users table (server-side upsert via API)
+      await fetch('/api/onboarding/band', { method: 'POST', body: JSON.stringify({ id: session.user.id, email: session.user.email, name: session.user.user_metadata?.name, role: 'DJ' }), headers: { 'Content-Type': 'application/json' } })
 
-      if (userError) throw userError
+      // Save profile via server action to centralize slug generation and uniqueness
+      const res = await fetch('/api/profiles/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileType: 'dj_profiles', profileId: session.user.id, payload: { userId: session.user.id, ...formData } })
+      })
 
-      // Then insert profile
-      const { error: profileError } = await supabase
-        .from('dj_profiles')
-        .insert({
-          userId: session.user.id,
-          ...formData
-        })
-
-      if (profileError) throw profileError
+      const json = await res.json()
+      if (!res.ok) {
+        console.error('Save failed', json)
+        alert('Failed to save profile')
+        return
+      }
 
       // Update user metadata
-      await supabase.auth.updateUser({
-        data: { role: 'DJ' }
-      })
+      await supabase.auth.updateUser({ data: { role: 'DJ' } })
 
       if (onComplete) {
         onComplete(formData)
@@ -123,12 +114,18 @@ export default function DJOnboardingForm({ onComplete, initialData }: DJOnboardi
 
     for (const f of Array.from(files)) {
       try {
-        const key = `${Date.now()}-${f.name}`
-        const { data, error } = await supabase.storage.from('djs').upload(key, f)
-        if (error) throw error
+        const fd = new FormData()
+        fd.append('file', f)
+        fd.append('type', 'photos')
 
-        const { data: urlData } = supabase.storage.from('djs').getPublicUrl(data.path)
-        urls.push(urlData.publicUrl)
+        const res = await fetch('/api/profiles/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (!res.ok) {
+          console.error('Upload failed', json)
+          alert('Upload failed')
+          continue
+        }
+        urls.push(json.publicUrl)
       } catch (error) {
         console.error('Upload error:', error)
         alert('Upload failed')

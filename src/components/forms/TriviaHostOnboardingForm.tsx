@@ -53,39 +53,25 @@ export default function TriviaHostOnboardingForm({ onComplete, initialData }: Tr
       }
 
       // First, ensure user exists in users table
-      const { error: userError } = await supabase
-        .from('users')
-        .upsert({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name,
-          role: 'TRIVIA_HOST'
-        }, {
-          onConflict: 'id'
-        })
+      // Server-side upsert for user
+      await fetch('/api/onboarding/band', { method: 'POST', body: JSON.stringify({ id: session.user.id, email: session.user.email, name: session.user.user_metadata?.name, role: 'TRIVIA_HOST' }), headers: { 'Content-Type': 'application/json' } })
 
-      if (userError) throw userError
-
-      // Then insert profile
-      const { error: profileError } = await supabase
-        .from('trivia_host_profiles')
-        .insert({
-          userId: session.user.id,
-          ...formData
-        })
-
-      if (profileError) throw profileError
-
-      // Update user metadata
-      await supabase.auth.updateUser({
-        data: { role: 'TRIVIA_HOST' }
+      // Save profile via central save endpoint
+      const res = await fetch('/api/profiles/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileType: 'trivia_host_profiles', profileId: session.user.id, payload: { userId: session.user.id, ...formData } })
       })
-
-      if (onComplete) {
-        onComplete(formData)
-      } else {
-        window.location.href = '/dashboard'
+      const json = await res.json()
+      if (!res.ok) {
+        console.error('Save failed', json)
+        alert('Failed to save profile')
+        return
       }
+
+      await supabase.auth.updateUser({ data: { role: 'TRIVIA_HOST' } })
+      if (onComplete) onComplete(formData)
+      else window.location.href = '/dashboard'
     } catch (error) {
       console.error('Error saving profile:', error)
       alert('Failed to save profile')
@@ -102,12 +88,18 @@ export default function TriviaHostOnboardingForm({ onComplete, initialData }: Tr
 
     for (const f of Array.from(files)) {
       try {
-        const key = `${Date.now()}-${f.name}`
-        const { data, error } = await supabase.storage.from('trivia_hosts').upload(key, f)
-        if (error) throw error
+        const fd = new FormData()
+        fd.append('file', f)
+        fd.append('type', 'photos')
 
-        const { data: urlData } = supabase.storage.from('trivia_hosts').getPublicUrl(data.path)
-        urls.push(urlData.publicUrl)
+        const res = await fetch('/api/profiles/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (!res.ok) {
+          console.error('Upload failed', json)
+          alert('Upload failed')
+          continue
+        }
+        urls.push(json.publicUrl)
       } catch (error) {
         console.error('Upload error:', error)
         alert('Upload failed')

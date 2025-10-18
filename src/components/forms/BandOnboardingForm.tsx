@@ -81,20 +81,32 @@ export default function BandOnboardingForm({ onComplete, initialData }: BandOnbo
       const url = getOnboardingBandFnUrl()
       console.log('🚀 Calling Edge Function at:', url)
       
-      fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(formData)
-      }).then(res => {
+      try {
+        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(formData) })
         if (res.ok) {
           window.location.href = '/dashboard'
-        } else {
-          alert('Failed to save profile')
+          return
         }
-      }).catch(err => {
-        console.error(err)
+
+        // Try to parse error body for more actionable logs
+        let text: string | null = null
+        try {
+          const json = await res.json()
+          text = json?.error || JSON.stringify(json)
+        } catch (e) {
+          try {
+            text = await res.text()
+          } catch (e2) {
+            text = null
+          }
+        }
+
+        console.error('Onboarding function error', res.status, text)
+        alert('Failed to save profile: ' + (text || `status ${res.status}`))
+      } catch (err) {
+        console.error('Network or unexpected error calling onboarding function', err)
         alert('Failed to save profile')
-      })
+      }
     }
   }
 

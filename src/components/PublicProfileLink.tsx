@@ -7,8 +7,8 @@ export default function PublicProfileLink({ profile, role }: { profile: any, rol
   if (role === 'VENUE') {
     return (
       <div className="mt-4">
-        <Link href={profile?.id ? `/venues/${profile.id}` : '/profile/edit'}>
-          <a className="text-austin-orange hover:underline">View public venue profile</a>
+        <Link href={profile?.id ? `/venues/${profile.id}` : '/profile/edit'} className="text-austin-orange hover:underline">
+          View public venue profile
         </Link>
       </div>
     )
@@ -19,8 +19,8 @@ export default function PublicProfileLink({ profile, role }: { profile: any, rol
 
   return (
     <div className="mt-4">
-      <Link href={`/profiles/${slug}`}>
-        <a className="text-austin-orange hover:underline">View public profile: /profiles/{slug}</a>
+      <Link href={`/profiles/${slug}`} className="text-austin-orange hover:underline">
+        View public profile: /profiles/{slug}
       </Link>
     </div>
   )

@@ -27,7 +27,7 @@ export default async function ProfilePage({ params }: { params: { slug: string }
     const { data, error } = await supabase
       .from(t.name)
       .select('*')
-      .eq('slug', slug)
+      .ilike('slug', slug)
       .maybeSingle()
 
     if (error) continue
@@ -59,8 +59,8 @@ export default async function ProfilePage({ params }: { params: { slug: string }
                   {photos && photos.length > 1 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
                       {photos.slice(1, 9).map((url: string, idx: number) => (
-                        <div key={idx} className="w-full h-32 bg-gray-100 rounded overflow-hidden">
-                          <img src={url} alt={`${displayName} ${idx+1}`} className="w-full h-full object-cover" />
+                        <div key={idx} className="w-full bg-gray-100 rounded overflow-hidden relative" style={{ paddingTop: '100%' }}>
+                          <img src={url} alt={`${displayName} ${idx + 1}`} className="absolute top-0 left-0 w-full h-full object-cover object-center" />
                         </div>
                       ))}
                     </div>

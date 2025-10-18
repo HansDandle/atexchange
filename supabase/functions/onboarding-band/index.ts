@@ -127,13 +127,18 @@ serve(async (req: Request) => {
       maxFee: body.maxFee ? parseInt(body.maxFee) : null,
     }
 
-    const { error: bandError } = await supabase
+    // Attempt insert; allow multiple band profiles per user
+    const { data: insertedData, error: bandError } = await supabase
       .from('band_profiles')
       .insert(bandData)
+      .select('id')
 
     if (bandError) {
       console.error('Band profile creation error:', bandError)
-      throw new Error(`Failed to create band profile: ${bandError.message}`)
+      return new Response(JSON.stringify({ error: `Failed to create band profile: ${bandError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
     console.log('Successfully created band profile for user:', userId)

@@ -53,35 +53,23 @@ export default function OtherCreativeOnboardingForm({ onComplete, initialData }:
         return
       }
 
-      // First, ensure user exists in users table
-      const { error: userError } = await supabase
-        .from('users')
-        .upsert({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name,
-          role: 'OTHER_CREATIVE'
-        }, {
-          onConflict: 'id'
-        })
+      // Server-side upsert for user
+      await fetch('/api/onboarding/band', { method: 'POST', body: JSON.stringify({ id: session.user.id, email: session.user.email, name: session.user.user_metadata?.name, role: 'OTHER_CREATIVE' }), headers: { 'Content-Type': 'application/json' } })
 
-      if (userError) throw userError
-
-      // Then insert profile
-      const { error: profileError } = await supabase
-        .from('other_creative_profiles')
-        .insert({
-          userId: session.user.id,
-          ...formData
-        })
-
-      if (profileError) throw profileError
-
-      // Update user metadata
-      await supabase.auth.updateUser({
-        data: { role: 'OTHER_CREATIVE' }
+      // Save profile via central save endpoint
+      const res = await fetch('/api/profiles/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileType: 'other_creative_profiles', profileId: session.user.id, payload: { userId: session.user.id, ...formData } })
       })
+      const json = await res.json()
+      if (!res.ok) {
+        console.error('Save failed', json)
+        alert('Failed to save profile')
+        return
+      }
 
+      await supabase.auth.updateUser({ data: { role: 'OTHER_CREATIVE' } })
       if (onComplete) {
         onComplete(formData)
       } else {
