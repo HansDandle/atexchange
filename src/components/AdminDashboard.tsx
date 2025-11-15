@@ -224,7 +224,7 @@ export default function AdminDashboard({
           .from('users')
           .update({
             suspended: true,
-            suspensionReason: 'Venue deleted due to policy violation'
+            suspension_reason: 'Venue deleted due to policy violation'
           })
           .eq('id', userId)
 
@@ -265,7 +265,7 @@ export default function AdminDashboard({
           .from('users')
           .update({
             suspended: true,
-            suspensionReason: 'Band profile deleted due to policy violation'
+            suspension_reason: 'Band profile deleted due to policy violation'
           })
           .eq('id', userId)
 
@@ -328,7 +328,7 @@ export default function AdminDashboard({
               .from('users')
               .update({
                 suspended: true,
-                suspensionReason: 'Venue deleted due to policy violation'
+                suspension_reason: 'Venue deleted due to policy violation'
               })
               .eq('id', venue.userId)
 
