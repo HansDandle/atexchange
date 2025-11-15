@@ -49,20 +49,23 @@ export default async function ProfilePage({ params }: { params: { slug: string }
           </header>
           <main className="container mx-auto px-4 py-12">
             <article className="bg-white rounded-lg shadow overflow-hidden">
+              {/* Header with name and type */}
+              <div className="p-6 md:p-10 border-b">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{displayName}</h1>
+                <p className="text-sm text-gray-600">{t.type.replace('_', ' ')}</p>
+              </div>
+
               {/* Hero */}
               {photos && photos.length > 0 ? (
-                <div className="w-full h-64 md:h-96 bg-gray-200">
-                  <img src={photos[0]} alt={`${displayName} hero`} className="w-full h-full object-cover" />
+                <div className="w-full bg-gray-200 flex items-center justify-center max-h-[600px]">
+                  <img src={photos[0]} alt={`${displayName} hero`} className="w-full h-auto max-h-[600px] object-contain" style={{ maxWidth: '100%' }} />
                 </div>
               ) : (
-                <div className="w-full h-40 bg-gradient-to-r from-austin-light to-austin-warm"></div>
+                <div className="w-full h-80 md:h-[500px] bg-gradient-to-r from-austin-light to-austin-warm"></div>
               )}
 
               <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2">
-                  <h1 className="text-3xl font-bold mb-2">{displayName}</h1>
-                  <p className="text-sm text-gray-600 mb-4">{t.type.replace('_', ' ')}</p>
-
                   {data.bio && <p className="text-gray-800 leading-relaxed mb-4">{data.bio}</p>}
 
                   {/* Thumbnails */}
@@ -76,6 +79,22 @@ export default async function ProfilePage({ params }: { params: { slug: string }
                     </div>
                   )}
 
+                  {/* Audio samples for bands */}
+                  {t.type === 'BAND' && data.audioSamples && data.audioSamples.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="font-semibold mb-3">Audio Samples</h3>
+                      <div className="space-y-2">
+                        {data.audioSamples.map((url: string, idx: number) => (
+                          <div key={idx}>
+                            <a href={url} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline text-sm">
+                              Listen to sample {idx + 1}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Role-specific details */}
                   <div className="space-y-3">
                     {t.type === 'BAND' && (
@@ -84,6 +103,12 @@ export default async function ProfilePage({ params }: { params: { slug: string }
                         {data.location && <div><strong>Location:</strong> {data.location}</div>}
                         {(data.minFee || data.maxFee) && (
                           <div><strong>Fee Range:</strong> {formatMoney(data.minFee)}{data.minFee && data.maxFee ? ` - ${formatMoney(data.maxFee)}` : ''}</div>
+                        )}
+                        {data.techRider && (
+                          <div>
+                            <strong>Technical Rider:</strong>
+                            <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{data.techRider}</p>
+                          </div>
                         )}
                       </>
                     )}
@@ -125,24 +150,50 @@ export default async function ProfilePage({ params }: { params: { slug: string }
                 </div>
 
                 <aside className="md:col-span-1">
-                  <div className="p-4 bg-gray-50 rounded">
+                  <div className="p-4 bg-gray-50 rounded space-y-4">
                     {/* Website */}
                     {data.website && (
-                      <div className="mb-3">
-                        <a href={data.website} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline">Website</a>
+                      <div>
+                        <a href={data.website} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline font-medium">Website</a>
                       </div>
+                    )}
+
+                    {/* Social Media Links - Bands */}
+                    {t.type === 'BAND' && (
+                      <>
+                        {data.spotifyUrl && (
+                          <div>
+                            <a href={data.spotifyUrl} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline">Spotify</a>
+                          </div>
+                        )}
+                        {data.youtubeUrl && (
+                          <div>
+                            <a href={data.youtubeUrl} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline">YouTube</a>
+                          </div>
+                        )}
+                        {data.instagramUrl && (
+                          <div>
+                            <a href={data.instagramUrl} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline">Instagram</a>
+                          </div>
+                        )}
+                        {data.facebookUrl && (
+                          <div>
+                            <a href={data.facebookUrl} target="_blank" rel="noreferrer" className="text-austin-orange hover:underline">Facebook</a>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Contact */}
                     {data.bookingEmail && (
-                      <div className="mb-3">
-                        <a href={`mailto:${data.bookingEmail}`} className="inline-block bg-austin-orange text-white px-4 py-2 rounded">Contact / Book</a>
+                      <div>
+                        <a href={`mailto:${data.bookingEmail}`} className="inline-block bg-austin-orange text-white px-4 py-2 rounded hover:bg-austin-charcoal">Contact / Book</a>
                       </div>
                     )}
 
-                    {/* Social / external links */}
-                    {data.instagram && <div className="text-sm">Instagram: <a href={data.instagram} className="text-austin-orange" target="_blank" rel="noreferrer">{data.instagram}</a></div>}
-                    {data.spotify && <div className="text-sm">Spotify: <a href={data.spotify} className="text-austin-orange" target="_blank" rel="noreferrer">{data.spotify}</a></div>}
+                    {/* Generic social / external links */}
+                    {data.instagram && t.type !== 'BAND' && <div className="text-sm">Instagram: <a href={data.instagram} className="text-austin-orange" target="_blank" rel="noreferrer">{data.instagram}</a></div>}
+                    {data.spotify && t.type !== 'BAND' && <div className="text-sm">Spotify: <a href={data.spotify} className="text-austin-orange" target="_blank" rel="noreferrer">{data.spotify}</a></div>}
                   </div>
                 </aside>
               </div>
