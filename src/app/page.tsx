@@ -130,16 +130,12 @@ export default function Home() {
               </div>
               
               {/* Prominent browse CTAs for anonymous users */}
-              <div className="flex items-center justify-center gap-4">
-                <Link href="/bands">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-6 py-4 border-white text-white hover:bg-white hover:text-austin-charcoal">
-                    Browse Bands
-                  </Button>
+              <div className="flex items-center justify-center gap-8 text-white">
+                <Link href="/bands" className="text-lg font-medium hover:text-austin-orange transition-colors">
+                  Browse Bands
                 </Link>
-                <Link href="/venues">
-                  <Button variant="ghost" size="lg" className="w-full sm:w-auto text-lg px-6 py-4 text-white hover:bg-white/10">
-                    Browse Venues
-                  </Button>
+                <Link href="/venues" className="text-lg font-medium hover:text-austin-orange transition-colors">
+                  Browse Venues
                 </Link>
               </div>
             </div>
