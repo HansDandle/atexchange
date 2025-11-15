@@ -33,10 +33,11 @@ export default async function AdminPage() {
     .from('band_profiles')
     .select(`
       *,
-      users:userId (
+      user:userId (
         id,
         email,
         name,
+        role,
         supabaseId
       )
     `)
@@ -45,16 +46,21 @@ export default async function AdminPage() {
   // Fetch all venue profiles  
   const { data: venueProfiles } = await supabase
     .from('venue_profiles')
-    .select(`
-      *,
-      users:userId (
-        id,
-        email,
-        name,
-        supabaseId
-      )
-    `)
+    .select('*')
     .order('createdAt', { ascending: false })
+
+  // Fetch users separately and attach to venue profiles
+  const { data: usersMap } = await supabase
+    .from('users')
+    .select('id, email, name, role, supabaseId')
+  
+  const venueProfilesWithUsers = (venueProfiles || []).map(venue => {
+    const user = (usersMap || []).find(u => u.id === venue.userId);
+    return {
+      ...venue,
+      users: user || null
+    };
+  });
 
   // Fetch recent applications
   const { data: recentApplications } = await supabase
@@ -101,19 +107,23 @@ export default async function AdminPage() {
     .select(`
       *,
       venue_profiles:venueProfileId (
-        venueName,
-        users:userId (
-          email
-        )
+        venueName
       )
     `)
     .order('createdAt', { ascending: false })
     .limit(50)
 
-  const normalizedVenueSlots = (venueSlots || []).map((slot: any) => ({
-    ...slot,
-    venue_profiles: Array.isArray(slot.venue_profiles) ? slot.venue_profiles[0] ?? null : slot.venue_profiles ?? null
-  }))
+  const normalizedVenueSlots = (venueSlots || []).map((slot: any) => {
+    const venueProfile = Array.isArray(slot.venue_profiles) ? slot.venue_profiles[0] ?? null : slot.venue_profiles ?? null;
+    const venueUser = venueProfile ? (usersMap || []).find(u => u.id === venueProfile.userId) : null;
+    return {
+      ...slot,
+      venue_profiles: venueProfile ? {
+        ...venueProfile,
+        users: venueUser || null
+      } : null
+    }
+  })
 
   // Fetch messages
   const { data: messages } = await supabase
@@ -136,7 +146,7 @@ export default async function AdminPage() {
     <AdminDashboard
       allUsers={allUsers || []}
       bandProfiles={bandProfiles || []}
-      venueProfiles={venueProfiles || []}
+      venueProfiles={venueProfilesWithUsers}
       recentApplications={normalizedApplications}
       venueSlots={normalizedVenueSlots}
       messages={messages || []}

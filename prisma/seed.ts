@@ -266,11 +266,18 @@ async function main() {
       const endTime = new Date(eventDate)
       endTime.setHours(23, 30, 0, 0) // 11:30 PM
       
+      const venueProfile = await prisma.venueProfile.findFirst({
+        where: { userId: user.id }
+      })
+      
+      if (!venueProfile) {
+        console.log(`No venue profile found for user ${user.id}`)
+        return
+      }
+      
       await prisma.venueSlot.create({
         data: {
-          venueProfileId: (await prisma.venueProfile.findUnique({ 
-            where: { userId: user.id } 
-          }))!.id,
+          venueProfileId: venueProfile.id,
           eventDate,
           startTime,
           endTime,
@@ -311,16 +318,20 @@ async function main() {
       const endDate = new Date(startDate)
       endDate.setDate(startDate.getDate() + 1) // Available for next day too
       
-      await prisma.bandAvailability.create({
-        data: {
-          bandProfileId: (await prisma.bandProfile.findUnique({ 
-            where: { userId: user.id } 
-          }))!.id,
-          startDate,
-          endDate,
-          notes: 'Available for evening shows',
-        },
+      const bandProfile = await prisma.bandProfile.findFirst({
+        where: { userId: user.id }
       })
+      
+      if (bandProfile) {
+        await prisma.bandAvailability.create({
+          data: {
+            bandProfileId: bandProfile.id,
+            startDate,
+            endDate,
+            notes: 'Available for evening shows',
+          },
+        })
+      }
     }
   }
 

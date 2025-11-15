@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 interface Props { searchParams?: { sort?: string } }
 
@@ -61,6 +62,7 @@ export default async function BandsPage({ searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-austin-charcoal">Bands</h1>

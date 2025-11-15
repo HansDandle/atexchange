@@ -8,31 +8,34 @@ datasource db {
 }
 
 model User {
-  id               String              @id @default(dbgenerated("(gen_random_uuid())::text"))
-  email            String              @unique
-  name             String?
-  role             UserRole
-  createdAt        DateTime?           @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime?           @default(now()) @updatedAt @db.Timestamptz(6)
-  supabaseId       String?             @unique
-  bandProfile      BandProfile?
-  receivedMessages Message[]           @relation("MessageReceiver")
-  sentMessages     Message[]           @relation("MessageSender")
-  reviews          reviews[]
-  venueProfile     VenueProfile?
-  triviaHostProfile TriviaHostProfile?
-  djProfile        DJProfile?
-  photographerProfile PhotographerProfile?
+  id                   String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  email                String                @unique
+  name                 String?
+  role                 UserRole
+  suspended            Boolean               @default(false)
+  suspensionReason     String?
+  createdAt            DateTime?             @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime?             @default(now()) @updatedAt @db.Timestamptz(6)
+  supabaseId           String?               @unique
+  bandProfile          BandProfile[]
+  djProfile            DJProfile?
+  receivedMessages     Message[]             @relation("MessageReceiver")
+  sentMessages         Message[]             @relation("MessageSender")
   otherCreativeProfile OtherCreativeProfile?
+  photographerProfile  PhotographerProfile?
+  reviews              reviews[]
+  triviaHostProfile    TriviaHostProfile?
+  venueProfiles        VenueProfile[]
 
   @@index([email])
   @@index([supabaseId], map: "users_supabaseid_idx")
   @@map("users")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model BandProfile {
   id             String             @id @default(dbgenerated("(gen_random_uuid())::text"))
-  userId         String             @unique
+  userId         String
   bandName       String
   bio            String?
   genre          String[]
@@ -43,18 +46,19 @@ model BandProfile {
   instagramUrl   String?
   facebookUrl    String?
   photos         String[]
-  slug           String?
   audioSamples   String[]
   techRider      String?
   minFee         Int?
   maxFee         Int?
   createdAt      DateTime?          @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime?          @default(now()) @updatedAt @db.Timestamptz(6)
+  slug           String?
   applications   Application[]
   availableDates BandAvailability[]
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "band_profiles_userid_fkey")
   reviews        reviews[]
 
+  @@index([userId], map: "band_profiles_userid_idx")
   @@map("band_profiles")
 }
 
@@ -73,7 +77,7 @@ model BandAvailability {
 
 model VenueProfile {
   id            String      @id @default(dbgenerated("(gen_random_uuid())::text"))
-  userId        String      @unique
+  userId        String      @default("0640e98b-92da-4bb3-8721-031ad6b58b76")
   venueName     String
   description   String?
   address       String?
@@ -95,9 +99,10 @@ model VenueProfile {
   createdAt     DateTime?   @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime?   @default(now()) @updatedAt @db.Timestamptz(6)
   reviews       reviews[]
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "venue_profiles_userid_fkey")
   venueSlots    VenueSlot[]
+  users         User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@index([userId], map: "venue_profiles_userid_idx")
   @@map("venue_profiles")
 }
 
@@ -110,10 +115,10 @@ model VenueSlot {
   eventTitle     String?
   description    String?
   genrePrefs     String[]
-  talentTypes    String[]      @default(["BAND"])
   status         SlotStatus?   @default(AVAILABLE)
   createdAt      DateTime?     @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime?     @default(now()) @updatedAt @db.Timestamptz(6)
+  talentTypes    String[]      @default(["BAND"])
   applications   Application[]
   venueProfile   VenueProfile  @relation(fields: [venueProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "venue_slots_venueprofileid_fkey")
 
@@ -121,21 +126,25 @@ model VenueSlot {
 }
 
 model Application {
-  id                     String             @id @default(dbgenerated("(gen_random_uuid())::text"))
-  bandProfileId          String?
-  triviaHostProfileId    String?
-  djProfileId            String?
-  photographerProfileId  String?
-  otherCreativeProfileId String?
-  venueSlotId            String
-  status                 ApplicationStatus? @default(PENDING)
-  message                String?
-  proposedFee            Int?
-  createdAt              DateTime?          @default(now()) @db.Timestamptz(6)
-  updatedAt              DateTime?          @default(now()) @updatedAt @db.Timestamptz(6)
-  bandProfile            BandProfile?       @relation(fields: [bandProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_bandprofileid_fkey")
-  venueSlot              VenueSlot          @relation(fields: [venueSlotId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_venueslotid_fkey")
-  messages               Message[]
+  id                      String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  bandProfileId           String?
+  venueSlotId             String
+  status                  ApplicationStatus?    @default(PENDING)
+  message                 String?
+  proposedFee             Int?
+  createdAt               DateTime?             @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime?             @default(now()) @updatedAt @db.Timestamptz(6)
+  triviaHostProfileId     String?
+  djProfileId             String?
+  photographerProfileId   String?
+  otherCreativeProfileId  String?
+  bandProfile             BandProfile?          @relation(fields: [bandProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_bandprofileid_fkey")
+  dj_profiles             DJProfile?            @relation(fields: [djProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_djprofileid_fkey")
+  other_creative_profiles OtherCreativeProfile? @relation(fields: [otherCreativeProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_othercreativeprofileid_fkey")
+  photographer_profiles   PhotographerProfile?  @relation(fields: [photographerProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_photographerprofileid_fkey")
+  trivia_host_profiles    TriviaHostProfile?    @relation(fields: [triviaHostProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_triviahostprofileid_fkey")
+  venueSlot               VenueSlot             @relation(fields: [venueSlotId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "applications_venueslotid_fkey")
+  messages                Message[]
 
   @@map("applications")
 }
@@ -158,7 +167,7 @@ model Message {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model reviews {
   id              String        @id @default(dbgenerated("(gen_random_uuid())::text"))
-  reviewer_id     String
+  reviewer_id     String?
   band_profile_id String?
   venue_id        String?
   rating          Int           @db.SmallInt
@@ -169,58 +178,63 @@ model reviews {
   is_flagged      Boolean       @default(false)
   moderator_notes String?
   band_profiles   BandProfile?  @relation(fields: [band_profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users           User          @relation(fields: [reviewer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           User?         @relation(fields: [reviewer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   venue_profiles  VenueProfile? @relation(fields: [venue_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model TriviaHostProfile {
-  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
-  userId           String        @unique
-  hostName         String
-  bio              String?
-  specialization   String?
-  experience       String?
-  photos           String[]
-  website          String?
-  phone            String?
-  location         String?
-  rates            Int?
-  slug             String?
-  createdAt        DateTime      @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "trivia_host_profiles_userid_fkey")
+  id             String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String        @unique
+  hostName       String
+  bio            String?
+  specialization String?
+  experience     String?
+  photos         String[]
+  website        String?
+  phone          String?
+  location       String?
+  rates          Int?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  slug           String?
+  applications   Application[]
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "trivia_host_profiles_userid_fkey")
 
   @@index([userId], map: "trivia_host_profiles_userid_idx")
   @@map("trivia_host_profiles")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model DJProfile {
-  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
-  userId           String        @unique
-  djName           String
-  bio              String?
-  specialization   String[]
-  experience       String?
-  photos           String[]
-  website          String?
-  mixCloudUrl      String?
-  spotifyUrl       String?
-  soundCloudUrl    String?
-  instagramUrl     String?
-  phone            String?
-  location         String?
-  minFee           Int?
-  maxFee           Int?
-  equipment        String?
-  slug             String?
-  createdAt        DateTime      @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dj_profiles_userid_fkey")
+  id             String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String        @unique
+  djName         String
+  bio            String?
+  specialization String[]
+  experience     String?
+  photos         String[]
+  website        String?
+  mixCloudUrl    String?
+  spotifyUrl     String?
+  soundCloudUrl  String?
+  instagramUrl   String?
+  phone          String?
+  location       String?
+  minFee         Int?
+  maxFee         Int?
+  equipment      String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  slug           String?
+  applications   Application[]
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dj_profiles_userid_fkey")
 
   @@index([userId], map: "dj_profiles_userid_idx")
   @@map("dj_profiles")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model PhotographerProfile {
   id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
   userId           String        @unique
@@ -234,32 +248,35 @@ model PhotographerProfile {
   phone            String?
   location         String?
   rates            Int?
-  slug             String?
   createdAt        DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  slug             String?
+  applications     Application[]
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "photographer_profiles_userid_fkey")
 
   @@index([userId], map: "photographer_profiles_userid_idx")
   @@map("photographer_profiles")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model OtherCreativeProfile {
-  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
-  userId           String        @unique
-  creativeName     String
-  bio              String?
-  creativeType     String?
-  specialization   String?
-  experience       String?
-  portfolio        String[]
-  website          String?
-  phone            String?
-  location         String?
-  rates            Int?
-  slug             String?
-  createdAt        DateTime      @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "other_creative_profiles_userid_fkey")
+  id             String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String        @unique
+  creativeName   String
+  bio            String?
+  creativeType   String?
+  specialization String?
+  experience     String?
+  portfolio      String[]
+  website        String?
+  phone          String?
+  location       String?
+  rates          Int?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  slug           String?
+  applications   Application[]
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "other_creative_profiles_userid_fkey")
 
   @@index([userId], map: "other_creative_profiles_userid_idx")
   @@map("other_creative_profiles")

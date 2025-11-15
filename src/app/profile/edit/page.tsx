@@ -7,6 +7,7 @@ import DJProfileEditor from '@/components/DJProfileEditor'
 import PhotographerProfileEditor from '@/components/PhotographerProfileEditor'
 import OtherCreativeProfileEditor from '@/components/OtherCreativeProfileEditor'
 import PublicProfileLink from '@/components/PublicProfileLink'
+import Header from '@/components/Header'
 
 export default async function EditProfilePage() {
   const supabase = createClient()
@@ -63,6 +64,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
@@ -109,6 +111,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
@@ -144,6 +147,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -174,6 +178,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -204,6 +209,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -234,6 +240,7 @@ export default async function EditProfilePage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <header className="bg-white border-b">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">

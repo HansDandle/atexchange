@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function resolveDbUser(supabase = createClient(), authUser: any) {
   const { data: bySupabase, error: supabaseErr } = await supabase
     .from('users')
-    .select('id, role, email')
+    .select('id, role, email, suspended')
     .eq('supabaseId', authUser.id)
     .maybeSingle()
   if (supabaseErr) console.error(supabaseErr)
@@ -11,7 +11,7 @@ export async function resolveDbUser(supabase = createClient(), authUser: any) {
 
   const { data: byEmail, error: emailErr } = await supabase
     .from('users')
-    .select('id, role, email')
+    .select('id, role, email, suspended')
     .eq('email', authUser.email)
     .maybeSingle()
   if (emailErr) console.error(emailErr)

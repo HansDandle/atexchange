@@ -123,6 +123,7 @@ export default function AdminDashboard({
   const [activeTab, setActiveTab] = useState('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [selectedVenues, setSelectedVenues] = useState<Set<string>>(new Set())
 
   const supabase = createClient()
 
@@ -143,6 +144,10 @@ export default function AdminDashboard({
 
     setLoading(true)
     try {
+      // Get current user to check if we're deleting ourselves
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const isDeletingSelf = currentUser?.id === supabaseId
+
       // Delete from users table (cascading will handle profiles)
       const { error } = await supabase
         .from('users')
@@ -158,7 +163,14 @@ export default function AdminDashboard({
       }
 
       alert('User deleted successfully')
-      window.location.reload()
+      
+      // If we deleted ourselves, sign out and redirect to login
+      if (isDeletingSelf) {
+        await supabase.auth.signOut()
+        window.location.href = '/login'
+      } else {
+        window.location.reload()
+      }
     } catch (error) {
       console.error('Error deleting user:', error)
       alert('Error deleting user')
@@ -186,6 +198,164 @@ export default function AdminDashboard({
     } catch (error) {
       console.error('Error deleting venue slot:', error)
       alert('Error deleting venue slot')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteVenue = async (venueId: string, userId: string, userRole: string) => {
+    if (!confirm('Are you sure you want to delete this venue? If the owner is not an admin, their account will be suspended.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Delete the venue profile
+      const { error: venueError } = await supabase
+        .from('venue_profiles')
+        .delete()
+        .eq('id', venueId)
+
+      if (venueError) throw venueError
+
+      // If owner is not an admin, suspend their account
+      if (userRole !== 'ADMIN') {
+        const { error: suspendError } = await supabase
+          .from('users')
+          .update({
+            suspended: true,
+            suspensionReason: 'Venue deleted due to policy violation'
+          })
+          .eq('id', userId)
+
+        if (suspendError) throw suspendError
+
+        alert('Venue deleted and owner account suspended')
+      } else {
+        alert('Venue deleted successfully')
+      }
+
+      window.location.reload()
+    } catch (error) {
+      console.error('Error deleting venue:', error)
+      alert('Error deleting venue')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteBand = async (bandId: string, userId: string, userRole: string) => {
+    if (!confirm('Are you sure you want to delete this band profile? If the owner is not an admin, their account will be suspended.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Delete the band profile
+      const { error: bandError } = await supabase
+        .from('band_profiles')
+        .delete()
+        .eq('id', bandId)
+
+      if (bandError) throw bandError
+
+      // If owner is not an admin, suspend their account
+      if (userRole !== 'ADMIN') {
+        const { error: suspendError } = await supabase
+          .from('users')
+          .update({
+            suspended: true,
+            suspensionReason: 'Band profile deleted due to policy violation'
+          })
+          .eq('id', userId)
+
+        if (suspendError) throw suspendError
+
+        alert('Band profile deleted and owner account suspended')
+      } else {
+        alert('Band profile deleted successfully')
+      }
+
+      window.location.reload()
+    } catch (error) {
+      console.error('Error deleting band:', error)
+      alert('Error deleting band')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBulkDeleteVenues = async () => {
+    if (selectedVenues.size === 0) {
+      alert('Please select venues to delete')
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedVenues.size} venue(s)? Owners who are not admins will be suspended.`)) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const venuesToDelete = Array.from(selectedVenues)
+      let deletedCount = 0
+      let suspendedCount = 0
+      const errors: string[] = []
+
+      for (const venueId of venuesToDelete) {
+        try {
+          const venue = venueProfiles.find(v => v.id === venueId)
+          if (!venue) {
+            errors.push(`Venue ${venueId} not found`)
+            continue
+          }
+
+          // Delete the venue
+          const { error: venueError } = await supabase
+            .from('venue_profiles')
+            .delete()
+            .eq('id', venueId)
+
+          if (venueError) {
+            errors.push(`Failed to delete venue ${venue.venueName}: ${venueError.message}`)
+            continue
+          }
+          deletedCount++
+
+          // If owner is not an admin, suspend them
+          if (venue.users?.role !== 'ADMIN') {
+            const { error: suspendError } = await supabase
+              .from('users')
+              .update({
+                suspended: true,
+                suspensionReason: 'Venue deleted due to policy violation'
+              })
+              .eq('id', venue.userId)
+
+            if (suspendError) {
+              errors.push(`Failed to suspend user for ${venue.venueName}: ${suspendError.message}`)
+              continue
+            }
+            suspendedCount++
+          }
+        } catch (itemError) {
+          console.error(`Error processing venue ${venueId}:`, itemError)
+          errors.push(`Error processing venue: ${String(itemError)}`)
+        }
+      }
+
+      if (errors.length > 0) {
+        console.error('Bulk delete errors:', errors)
+        alert(`Deleted ${deletedCount} venue(s). Suspended ${suspendedCount} user(s).\n\nErrors:\n${errors.join('\n')}`)
+      } else {
+        alert(`Deleted ${deletedCount} venue(s). Suspended ${suspendedCount} user(s).`)
+      }
+      
+      setSelectedVenues(new Set())
+      window.location.reload()
+    } catch (error) {
+      console.error('Error bulk deleting venues:', error)
+      alert(`Error deleting venues: ${String(error)}`)
     } finally {
       setLoading(false)
     }
@@ -468,7 +638,7 @@ export default function AdminDashboard({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteUser(band.userId, band.users.supabaseId)}
+                        onClick={() => handleDeleteBand(band.id, band.userId, band.users?.role || 'BAND')}
                         className="text-red-600 hover:text-red-900 hover:bg-red-50"
                         disabled={loading}
                       >
@@ -493,7 +663,33 @@ export default function AdminDashboard({
           {activeTab === 'venues' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-austin-charcoal">Venue Profiles</h2>
+                <div className="flex items-center space-x-4">
+                  <h2 className="text-xl font-semibold text-austin-charcoal">Venue Profiles</h2>
+                  {selectedVenues.size > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-600">
+                        {selectedVenues.size} selected
+                      </span>
+                      <Button
+                        variant="austin"
+                        size="sm"
+                        onClick={handleBulkDeleteVenues}
+                        disabled={loading}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Delete Selected
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedVenues(new Set())}
+                        disabled={loading}
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
@@ -507,13 +703,47 @@ export default function AdminDashboard({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredVenues.map(venue => (
-                  <div key={venue.id} className="bg-white rounded-lg shadow-sm border p-6">
+                  <div
+                    key={venue.id}
+                    className={`bg-white rounded-lg shadow-sm border p-6 cursor-pointer transition ${
+                      selectedVenues.has(venue.id) ? 'border-austin-orange bg-orange-50' : ''
+                    }`}
+                    onClick={() => {
+                      const newSelected = new Set(selectedVenues)
+                      if (newSelected.has(venue.id)) {
+                        newSelected.delete(venue.id)
+                      } else {
+                        newSelected.add(venue.id)
+                      }
+                      setSelectedVenues(newSelected)
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-medium text-gray-900">{venue.venueName}</h3>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedVenues.has(venue.id)}
+                          onChange={() => {
+                            const newSelected = new Set(selectedVenues)
+                            if (newSelected.has(venue.id)) {
+                              newSelected.delete(venue.id)
+                            } else {
+                              newSelected.add(venue.id)
+                            }
+                            setSelectedVenues(newSelected)
+                          }}
+                          className="w-4 h-4 rounded cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <h3 className="text-lg font-medium text-gray-900">{venue.venueName}</h3>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteUser(venue.userId, venue.users.supabaseId)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteVenue(venue.id, venue.userId, venue.users?.role || 'VENUE')
+                        }}
                         className="text-red-600 hover:text-red-900 hover:bg-red-50"
                         disabled={loading}
                       >

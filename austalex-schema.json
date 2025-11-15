@@ -1,0 +1,602 @@
+[
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "deleted_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "is_flagged",
+    "data_type": "boolean"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "hasLighting",
+    "data_type": "boolean"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "hasParking",
+    "data_type": "boolean"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "status",
+    "data_type": "USER-DEFINED"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "users",
+    "column_name": "role",
+    "data_type": "USER-DEFINED"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "users",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "users",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_availability",
+    "column_name": "startDate",
+    "data_type": "date"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_availability",
+    "column_name": "endDate",
+    "data_type": "date"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "rates",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_profiles",
+    "column_name": "minFee",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "rates",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "status",
+    "data_type": "USER-DEFINED"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_availability",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "proposedFee",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_availability",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_profiles",
+    "column_name": "maxFee",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "capacity",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "messages",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "band_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "eventDate",
+    "data_type": "date"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "startTime",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_slots",
+    "column_name": "endTime",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "rating",
+    "data_type": "smallint"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "venue_profiles",
+    "column_name": "hasSound",
+    "data_type": "boolean"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "minFee",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "other_creative_profiles",
+    "column_name": "rates",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "other_creative_profiles",
+    "column_name": "createdAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "other_creative_profiles",
+    "column_name": "updatedAt",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "maxFee",
+    "data_type": "integer"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "messages",
+    "column_name": "receiverId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "messages",
+    "column_name": "applicationId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "messages",
+    "column_name": "content",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "reviewer_id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "band_profile_id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "venue_id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "body",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "reviews",
+    "column_name": "moderator_notes",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "userId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "hostName",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "bio",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "specialization",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "experience",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "photos",
+    "data_type": "ARRAY"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "website",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "phone",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "location",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "trivia_host_profiles",
+    "column_name": "slug",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "userId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "djName",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "bio",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "specialization",
+    "data_type": "ARRAY"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "experience",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "photos",
+    "data_type": "ARRAY"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "website",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "mixCloudUrl",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "spotifyUrl",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "soundCloudUrl",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "instagramUrl",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "phone",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "location",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "equipment",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "dj_profiles",
+    "column_name": "slug",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "userId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "photographerName",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "bio",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "specialization",
+    "data_type": "ARRAY"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "experience",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "portfolioPhotos",
+    "data_type": "ARRAY"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "website",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "instagramUrl",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "phone",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "location",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "photographer_profiles",
+    "column_name": "slug",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "id",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "bandProfileId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "venueSlotId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "message",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "triviaHostProfileId",
+    "data_type": "text"
+  },
+  {
+    "table_schema": "public",
+    "table_name": "applications",
+    "column_name": "djProfileId",
+    "data_type": "text"
+  }
+]

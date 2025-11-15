@@ -1,63 +1,91 @@
-import { createClient } from '@/lib/supabase/server'
+"use client";
+
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient'
+import Header from '@/components/Header'
+import { useSession } from '@/lib/session-context'
+import useSWR from 'swr';
 
 interface Props { params: { id: string } }
 
-export default async function VenueProfilePage({ params }: Props) {
-  const supabase = createClient()
+export default function VenueProfilePage({ params }: Props) {
+  const { user: sessionUser } = useSession();
+  const [venue, setVenue] = useState<any>(null);
+  const [newReview, setNewReview] = useState({ rating: 0, text: '' });
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  let user = null
-  try {
-    const res = await supabase.auth.getUser()
-    user = res?.data?.user ?? null
-  } catch (e) {
-    user = null
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: venueProfiles, error: venueError } = await supabase
+          .from('venue_profiles')
+          .select('*')
+          .eq('id', params.id)
 
-  let venue: any = null
-  try {
-    const { data: venueProfiles, error } = await supabase
-      .from('venue_profiles')
-      .select(`
-        *,
-        user:users!venue_profiles_userId (id, email, name, supabaseId)
-      `)
-      .eq('id', params.id)
+        if (venueError) throw venueError
+        const venueData = (venueProfiles || [])[0] ?? null
+        if (venueData) venueData.user = Array.isArray(venueData.user) ? venueData.user[0] ?? null : venueData.user ?? null
+        setVenue(venueData);
 
-    if (error) throw error
-    venue = (venueProfiles || [])[0] ?? null
-    if (venue) venue.user = Array.isArray(venue.user) ? venue.user[0] ?? null : venue.user ?? null
-  } catch (err: any) {
-    if (err.code === 'PGRST200' || (err.details && String(err.details).includes('no matches were found'))) {
-      const { data: venueRow } = await supabase
-        .from('venue_profiles')
-        .select('*')
-        .eq('id', params.id)
-        .single()
-      if (!venueRow) return redirect('/')
-      let owner = null
-      if (venueRow.userId) {
-        const { data: userRow } = await supabase
-          .from('users')
-          .select('id, email, name, supabaseId')
-          .eq('id', venueRow.userId)
-          .single()
-        owner = userRow ?? null
+      } catch (err: any) {
+        if (err.code === 'PGRST200' || (err.details && String(err.details).includes('no matches were found'))) {
+          const { data: venueRow } = await supabase
+            .from('venue_profiles')
+            .select('*')
+            .eq('id', params.id)
+            .single()
+          if (!venueRow) return redirect('/')
+          let owner = null
+          if (venueRow.userId) {
+            const { data: userRow } = await supabase
+              .from('users')
+              .select('id, email, name, supabaseId')
+              .eq('id', venueRow.userId)
+              .single()
+            owner = userRow ?? null
+          }
+          setVenue({ ...venueRow, user: owner });
+        } else {
+          setError(err.message);
+        }
       }
-      venue = { ...venueRow, user: owner }
-    } else {
-      throw err
-    }
-  }
+    };
 
-  if (!venue) return redirect('/')
+    fetchData();
+  }, [params.id]);
+
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const { data: reviews, mutate } = useSWR(`/api/venues/${params.id}/reviews`, fetcher);
+
+  const handleReviewSubmit = async () => {
+    if (!sessionUser) return;
+    const response = await fetch(`/api/venues/${params.id}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...newReview,
+        userId: isAnonymous ? null : sessionUser.id,
+      }),
+    });
+    if (response.ok) {
+      mutate();
+      setNewReview({ rating: 0, text: '' });
+      setIsAnonymous(false);
+    }
+  };
+
+  if (error) return <div>Error: {error}</div>;
+  if (!venue) return <div>Loading...</div>;
 
   const owner = venue.user
-  const isOwner = user && owner && owner.supabaseId === user.id
+  const isOwner = sessionUser && owner && owner.supabaseId === sessionUser.id
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-austin-charcoal">{venue.venueName}</h1>
@@ -129,15 +157,132 @@ export default async function VenueProfilePage({ params }: Props) {
             <aside>
               <div className="bg-gray-50 p-4 rounded">
                 <h4 className="font-semibold">Contact</h4>
-                <p className="mt-2 text-sm">{owner?.name ?? owner?.email ?? '—'}</p>
-                {venue.phone && <p className="mt-2 text-sm">Phone: <a className="text-austin-orange" href={`tel:${venue.phone}`}>{venue.phone}</a></p>}
-                {venue.bookingEmail && <p className="mt-2 text-sm">Booking: <a className="text-austin-orange" href={`mailto:${venue.bookingEmail}`}>{venue.bookingEmail}</a></p>}
-                {venue.website && <p className="mt-2 text-sm">Website: <a className="text-austin-orange" href={venue.website} target="_blank" rel="noreferrer">{venue.website}</a></p>}
+                {sessionUser ? (
+                  <>
+                    <p className="mt-2 text-sm">{owner?.name ?? owner?.email ?? '—'}</p>
+                    {venue.phone && <p className="mt-2 text-sm">Phone: <a className="text-austin-orange" href={`tel:${venue.phone}`}>{venue.phone}</a></p>}
+                    {venue.bookingEmail && <p className="mt-2 text-sm">Booking: <a className="text-austin-orange" href={`mailto:${venue.bookingEmail}`}>{venue.bookingEmail}</a></p>}
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">Login to view contact details</p>
+                )}
               </div>
             </aside>
           </div>
+
+          <div className="mt-8">
+            {/* Claim Venue section */}
+            {sessionUser && !isOwner && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                <p className="text-sm text-yellow-700">
+                  Do you do the booking here?&nbsp;
+                  <button
+                    // onClick={handleClaim}
+                    className="inline-flex items-center px-3 py-1 text-sm font-semibold text-white bg-austin-orange rounded hover:bg-austin-orange-dark focus:outline-none focus:ring-2 focus:ring-austin-orange focus:ring-opacity-50"
+                  >
+                    Claim your venue
+                  </button>
+                </p>
+              </div>
+            )}
+          </div>
+
+          <section className="mt-8">
+            <h2 className="text-xl font-bold">Reviews</h2>
+            {sessionUser ? (
+              <>
+                <div className="mt-4">
+                  <h3 className="font-semibold">Leave a Review</h3>
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium mb-2">Rating</label>
+                    <select
+                      className="w-full px-3 py-2 border rounded"
+                      value={newReview.rating}
+                      onChange={(e) => setNewReview({ ...newReview, rating: parseFloat(e.target.value) })}
+                    >
+                      <option value={0}>Select a rating</option>
+                      <option value={0.5}>0.5 ★</option>
+                      <option value={1}>1 ★</option>
+                      <option value={1.5}>1.5 ★</option>
+                      <option value={2}>2 ★</option>
+                      <option value={2.5}>2.5 ★</option>
+                      <option value={3}>3 ★</option>
+                      <option value={3.5}>3.5 ★</option>
+                      <option value={4}>4 ★</option>
+                    </select>
+                  </div>
+                  <textarea
+                    className="w-full mt-2 p-2 border rounded"
+                    placeholder="Write your review..."
+                    value={newReview.text}
+                    onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
+                  />
+                  <div className="mt-2 flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="anonymous"
+                      checked={isAnonymous}
+                      onChange={(e) => setIsAnonymous(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <label htmlFor="anonymous" className="text-sm text-gray-700">Post anonymously</label>
+                  </div>
+                  <button
+                    className="mt-2 px-4 py-2 bg-austin-orange text-white rounded"
+                    onClick={handleReviewSubmit}
+                  >
+                    Submit Review
+                  </button>
+                </div>
+
+                <div className="mt-8">
+                  <h3 className="font-semibold">All Reviews</h3>
+                  {reviews?.length > 0 ? (
+                    reviews.map((review: any, index: number) => {
+                      const renderRatingNotes = (rating: number) => {
+                        return Array.from({ length: 4 }).map((_, i) => {
+                          const noteValue = i + 1
+                          const isFilled = rating >= noteValue
+                          const isHalf = rating > i && rating < noteValue
+                          return (
+                            <img
+                              key={i}
+                              src={isFilled ? '/wholenote.png' : isHalf ? '/halfnote.png' : '/halfnote.png'}
+                              alt={isFilled ? 'filled note' : 'empty note'}
+                              className="w-6 h-6 opacity-75"
+                            />
+                          )
+                        })
+                      }
+                      return (
+                        <div key={index} className="mt-4 p-4 border rounded">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              {renderRatingNotes(review.rating)}
+                              <span className="ml-2 text-sm text-gray-600">({review.rating} ★)</span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {review.users?.name || review.users?.email || 'Anonymous'}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm">{review.body}</p>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="mt-2 text-sm text-gray-500">No reviews yet.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-gray-500">Login to view and leave reviews.</p>
+            )}
+          </section>
         </div>
       </main>
     </div>
   )
 }
+
+// Refactor the `VenueProfilePage` to move server-side logic to an API route or Server Component.
+// Replace direct Supabase calls with API calls to ensure compatibility with Client Components.

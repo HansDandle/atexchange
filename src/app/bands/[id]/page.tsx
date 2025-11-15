@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
+import Header from '@/components/Header'
 
 const BandGallery = dynamic(() => import('@/components/BandGallery'), { ssr: false })
 
@@ -64,6 +65,7 @@ export default async function BandProfilePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-austin-charcoal">{band.bandName}</h1>

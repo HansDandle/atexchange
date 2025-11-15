@@ -8,6 +8,7 @@ import QuickActions from '@/components/dashboard/QuickActions'
 import RecentActivity from '@/components/dashboard/RecentActivity'
 import UpcomingGigs from '@/components/dashboard/UpcomingGigs'
 import BandSelector from '@/components/dashboard/BandSelector'
+import Header from '@/components/Header';
 
 export default async function DashboardPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const supabase = createClient()
@@ -16,6 +17,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
   const resolvedDbUser = await resolveDbUser(supabase, user)
   if (!resolvedDbUser) return redirect('/onboarding')
+
+  // Check if user is suspended
+  if (resolvedDbUser.suspended) {
+    redirect('/suspended')
+  }
 
   const { role, profiles } = await getProfilesForUser(supabase, resolvedDbUser)
   // Support multiple profiles per user. If bandId provided in query, pick that profile.
@@ -38,25 +44,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-austin-charcoal">Austin Talent Exchange</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user.user_metadata?.name || user.email}</span>
-              {/* If multiple band profiles, show selector */}
-              {role === 'BAND' && profilesArray.length > 1 && (
-                <BandSelector profiles={profilesArray} selectedId={profile?.id} />
-              )}
-              {role === 'ADMIN' && <Link href="/admin"><Button variant="austin" size="sm">Admin Dashboard</Button></Link>}
-              {role === 'BAND' && <Link href="/onboarding?role=band"><Button variant="outline" size="sm">Create New Band</Button></Link>}
-              <form action={handleSignOut}><Button variant="outline" size="sm">Sign Out</Button></form>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <>
+      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           {profile ? (
@@ -89,6 +78,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
           )}
         </div>
       </main>
-    </div>
+    </>
   )
 }

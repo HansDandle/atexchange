@@ -46,3 +46,16 @@ next-env.d.ts
 # OS
 Thumbs.db
 .DS_Store
+
+#admin stuff
+reset-admin-password.js
+setup-admin.js
+admin-data.json
+restore-admin.js
+admin-backup.zip
+vercel.json
+
+#scrape
+scrape-data.json
+venues.json
+scrape-logs.txt

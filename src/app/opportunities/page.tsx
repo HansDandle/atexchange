@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import Header from '@/components/Header';
 
 // Dynamically load the client-side OpportunitiesBrowser to avoid build-time import issues
 const OpportunitiesBrowser: any = dynamic(() => import('../../components/OpportunitiesBrowser'), { ssr: false })
@@ -115,35 +116,11 @@ export default async function OpportunitiesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-austin-charcoal">
-                {getTitleForRole(resolvedDbUser.role)}
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {getDescriptionForRole(resolvedDbUser.role)}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <a href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">
-                Back to Dashboard
-              </a>
-              <span className="text-sm text-gray-600">
-                Welcome, {user.user_metadata?.name || user.email}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <>
+      <Header />
       <main className="container mx-auto px-4 py-8">
         <OpportunitiesBrowser initialSlots={normalizedSlots} userRole={resolvedDbUser.role} />
       </main>
-    </div>
+    </>
   )
 }

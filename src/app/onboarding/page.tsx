@@ -26,8 +26,30 @@ export default function OnboardingPageClient() {
         router.push('/login')
         return
       }
+      
+      // Redirect admins to admin panel only if they have a database record
+      const userRole = user.user_metadata?.role
+      if (userRole === 'ADMIN') {
+        // Check if admin still exists in database
+        const { data: dbUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('supabaseId', user.id)
+          .single()
+        
+        if (dbUser) {
+          router.push('/admin')
+          return
+        } else {
+          // Admin was deleted from database, sign them out
+          await supabase.auth.signOut()
+          router.push('/login')
+          return
+        }
+      }
+      
       setUser(user)
-      setRole(user.user_metadata?.role || null)
+      setRole(userRole || null)
       setLoading(false)
     })()
     return () => { mounted = false }
