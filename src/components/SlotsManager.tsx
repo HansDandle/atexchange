@@ -719,7 +719,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                 <p className="text-sm text-gray-600">{selectedBand.location ?? 'Location not provided'}</p>
               </div>
               <div className="flex items-center space-x-2">
-                <a href={`/bands/${selectedBand.id}`} className="text-austin-orange text-sm">Open Profile</a>
+                <a href={`/profiles/${selectedBand.slug || selectedBand.id}`} className="text-austin-orange text-sm">Open Profile</a>
                 <Button variant="outline" size="sm" onClick={() => setSelectedBand(null)}>Close</Button>
               </div>
             </div>

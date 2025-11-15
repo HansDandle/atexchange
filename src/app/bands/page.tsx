@@ -20,6 +20,7 @@ export default async function BandsPage({ searchParams }: Props) {
         location,
         genre,
         photos,
+        slug,
         user:users!band_profiles_userId (id, email, name),
         createdAt
       `)
@@ -42,7 +43,7 @@ export default async function BandsPage({ searchParams }: Props) {
     if (err.code === 'PGRST200' || (err.details && String(err.details).includes('no matches were found'))) {
       const { data: profiles } = await supabase
         .from('band_profiles')
-        .select('id, bandName, location, genre, photos, userId')
+        .select('id, bandName, location, genre, photos, slug, userId')
 
       const ids = Array.from(new Set((profiles || []).map((p: any) => p.userId).filter(Boolean)))
       const { data: users } = ids.length > 0 ? await supabase
@@ -86,7 +87,7 @@ export default async function BandsPage({ searchParams }: Props) {
               <p className="text-sm text-gray-600">{b.location ?? '—'}</p>
               <p className="text-sm mt-2 text-gray-700">{(b.genre || []).slice(0,3).join(', ')}</p>
               <div className="mt-4 flex items-center justify-between">
-                <Link href={`/bands/${b.id}`} className="text-austin-orange font-medium">View Profile</Link>
+                <Link href={`/profiles/${b.slug || b.id}`} className="text-austin-orange font-medium">View Profile</Link>
                 <span className="text-xs text-gray-500">Member: {b.user?.name ?? b.user?.email ?? '—'}</span>
               </div>
             </article>

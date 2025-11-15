@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import BandReviews from '@/components/BandReviews'
 
 function formatMoney(val: number | null | undefined) {
   if (val == null) return null
@@ -197,6 +198,13 @@ export default async function ProfilePage({ params }: { params: { slug: string }
                   </div>
                 </aside>
               </div>
+
+              {/* Reviews section for bands */}
+              {t.type === 'BAND' && (
+                <div className="p-6 md:p-10 border-t">
+                  <BandReviews bandId={data.id} />
+                </div>
+              )}
             </article>
           </main>
         </div>
