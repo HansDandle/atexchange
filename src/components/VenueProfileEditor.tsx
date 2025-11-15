@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Save, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { normalizeUrl } from '@/lib/url-utils'
 
 interface VenueProfile {
   id: string
@@ -146,7 +147,7 @@ export default function VenueProfileEditor({ profile }: VenueProfileEditorProps)
         hasLighting: formData.hasLighting,
         hasParking: formData.hasParking,
         phone: formData.phone || null,
-        website: formData.website || null,
+        website: formData.website ? normalizeUrl(formData.website) : null,
         bookingEmail: formData.bookingEmail || null,
         payoutType: formData.payoutType || null,
         payoutDetails: formData.payoutDetails || null,
@@ -268,8 +269,8 @@ export default function VenueProfileEditor({ profile }: VenueProfileEditorProps)
               Website
             </label>
             <Input
-              type="url"
-              placeholder="https://yourvenue.com"
+              type="text"
+              placeholder="yourvenue.com or https://yourvenue.com"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             />

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Save, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { normalizeUrl } from '@/lib/url-utils'
 
 interface BandProfile {
   id: string
@@ -137,15 +138,14 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
     try {
       const updateData = {
         bandName: formData.bandName,
-        name: formData.bandName,
         bio: formData.bio || null,
         genre: formData.genre.length > 0 ? formData.genre : null,
         location: formData.location || null,
-        website: formData.website || null,
-        spotifyUrl: formData.spotifyUrl || null,
-        youtubeUrl: formData.youtubeUrl || null,
-        instagramUrl: formData.instagramUrl || null,
-        facebookUrl: formData.facebookUrl || null,
+        website: formData.website ? normalizeUrl(formData.website) : null,
+        spotifyUrl: formData.spotifyUrl ? normalizeUrl(formData.spotifyUrl) : null,
+        youtubeUrl: formData.youtubeUrl ? normalizeUrl(formData.youtubeUrl) : null,
+        instagramUrl: formData.instagramUrl ? normalizeUrl(formData.instagramUrl) : null,
+        facebookUrl: formData.facebookUrl ? normalizeUrl(formData.facebookUrl) : null,
         techRider: formData.techRider || null,
         minFee: formData.minFee ? parseInt(formData.minFee) * 100 : null,
         maxFee: formData.maxFee ? parseInt(formData.maxFee) * 100 : null,
@@ -248,8 +248,8 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
               Website
             </label>
             <Input
-              type="url"
-              placeholder="https://yourbandwebsite.com"
+              type="text"
+              placeholder="yourbandwebsite.com or https://yourbandwebsite.com"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             />
@@ -260,8 +260,8 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
               Spotify URL
             </label>
             <Input
-              type="url"
-              placeholder="https://open.spotify.com/artist/..."
+              type="text"
+              placeholder="open.spotify.com/artist/... or full URL"
               value={formData.spotifyUrl}
               onChange={(e) => setFormData({ ...formData, spotifyUrl: e.target.value })}
             />
@@ -272,8 +272,8 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
               YouTube URL
             </label>
             <Input
-              type="url"
-              placeholder="https://youtube.com/..."
+              type="text"
+              placeholder="youtube.com/... or full URL"
               value={formData.youtubeUrl}
               onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
             />
@@ -284,8 +284,8 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
               Instagram URL
             </label>
             <Input
-              type="url"
-              placeholder="https://instagram.com/..."
+              type="text"
+              placeholder="instagram.com/... or full URL"
               value={formData.instagramUrl}
               onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
             />
@@ -296,8 +296,8 @@ export default function BandProfileEditor({ profile }: BandProfileEditorProps) {
               Facebook URL
             </label>
             <Input
-              type="url"
-              placeholder="https://facebook.com/..."
+              type="text"
+              placeholder="facebook.com/... or full URL"
               value={formData.facebookUrl}
               onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
             />

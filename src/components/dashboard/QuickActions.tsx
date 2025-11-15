@@ -11,13 +11,16 @@ export default function QuickActions({ role, profile }: { role: string; profile:
         <Link href="/messages"><Button variant="outline" className="w-full">Messages</Button></Link>
         {role === 'VENUE' && <Link href="/slots"><Button variant="outline" className="w-full">Add More Slots</Button></Link>}
         {role === 'BAND' && <Link href="/gigs"><Button variant="austin" className="w-full">Browse Available Gigs</Button></Link>}
-        {role === 'VENUE' ? (
-          <Link href={slug ? `/profiles/${slug}` : '/profile/edit'}>
-            <Button variant="austin" className="w-full">View Venue Profile</Button>
-          </Link>
-        ) : (
-          <Link href={slug ? `/profiles/${slug}` : '/profile/edit'}>
-            <Button variant="ghost" className="w-full">View My Profile</Button>
+        <Link href="/profile/edit">
+          <Button variant="austin" className="w-full">
+            {role === 'VENUE' ? 'Edit Venue Profile' : 'Edit Profile'}
+          </Button>
+        </Link>
+        {slug && (
+          <Link href={`/profiles/${slug}`} target="_blank">
+            <Button variant="outline" className="w-full">
+              {role === 'VENUE' ? 'View Venue Profile' : 'View Public Profile'}
+            </Button>
           </Link>
         )}
       </div>

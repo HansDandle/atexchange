@@ -26,16 +26,23 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError(error.message)
+        if (error.message?.includes('rate limit')) {
+          setError('Too many login attempts. Please wait a few minutes and try again.')
+        } else {
+          setError(error.message)
+        }
         return
       }
 
       if (data.user) {
         router.push('/dashboard')
-        router.refresh()
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
+    } catch (err: any) {
+      if (err?.message?.includes('rate limit')) {
+        setError('Too many login attempts. Please wait a few minutes and try again.')
+      } else {
+        setError('An unexpected error occurred')
+      }
     } finally {
       setLoading(false)
     }
