@@ -119,6 +119,11 @@ export default function SignupPage() {
               </div>
             )}
 
+            {/* Email Verification Notice */}
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+              <strong>📧 Heads up:</strong> You'll receive a verification email. Check your inbox and spam folder to confirm your account.
+            </div>
+
             {/* Role Selection: Artist, Venue, DJ, Trivia Host, Photographer, Other Creative */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
