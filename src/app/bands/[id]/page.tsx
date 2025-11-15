@@ -67,13 +67,18 @@ export default async function BandProfilePage({ params }: Props) {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-austin-charcoal">{band.bandName}</h1>
-          <div>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/bands" className="text-sm text-gray-600 hover:text-austin-orange">
+              ← Back to Browse Bands
+            </Link>
             {isOwner && (
-              <Link href="/profile/edit" className="text-sm text-austin-orange">Edit Profile</Link>
+              <Link href="/profile/edit" className="text-sm text-austin-orange hover:underline">
+                Edit Profile
+              </Link>
             )}
           </div>
+          <h1 className="text-2xl font-bold text-austin-charcoal">{band.bandName}</h1>
         </div>
       </header>
 

@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
+import Header from '@/components/Header'
 
 function formatMoney(val: number | null | undefined) {
   if (val == null) return null
@@ -37,6 +39,14 @@ export default async function ProfilePage({ params }: { params: { slug: string }
 
       return (
         <div className="min-h-screen bg-gray-50">
+          <Header />
+          <header className="bg-white border-b">
+            <div className="container mx-auto px-4 py-4">
+              <Link href="/" className="text-sm text-gray-600 hover:text-austin-orange">
+                ← Back Home
+              </Link>
+            </div>
+          </header>
           <main className="container mx-auto px-4 py-12">
             <article className="bg-white rounded-lg shadow overflow-hidden">
               {/* Hero */}
