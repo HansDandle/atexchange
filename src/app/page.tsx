@@ -80,56 +80,69 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto text-center">
-            {/* Badge */}
-      <div className="inline-flex items-center px-4 py-2 rounded-full bg-austin-orange/10 border border-austin-orange/20 text-austin-orange text-sm font-medium mb-8">
-        <IconMapPin className="w-4 h-4 mr-2" />
-        Austin — Beta Launch
-      </div>
+      {/* Hero Section with Image */}
+      <section className="relative overflow-hidden bg-austin-charcoal">
+        <div className="relative h-screen md:h-[32rem] lg:h-[40rem] w-full">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: 'url(/atxhero3.jpg)',
+              opacity: 0.3
+            }}
+          />
+          
+          {/* Dark Overlay Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-austin-charcoal/70 via-austin-charcoal/50 to-austin-charcoal/80" />
+          
+          {/* Content */}
+          <div className="relative h-full container mx-auto px-4 flex items-center">
+            <div className="max-w-4xl mx-auto text-center text-white w-full">
+              {/* Badge */}
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-austin-orange/20 border border-austin-orange/40 text-austin-orange text-sm font-medium mb-8">
+                <IconMapPin className="w-4 h-4 mr-2" />
+                Austin — Beta Launch
+              </div>
 
-            <h1 className="text-6xl md:text-7xl font-bold text-austin-charcoal mb-6 leading-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
                 Connect with local venues and musicians in Austin
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-3xl mx-auto">
-                A simple platform for bands and venues to discover each other, manage availability, and book shows. Join the waitlist to get early access.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
-              <Link href="/signup?role=band">
-                <Button variant="austin" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all">
-                  <IconMusic className="w-5 h-5 mr-2" />
-                  I&apos;m a Band
-                  <IconArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/signup?role=venue">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 border-austin-orange text-austin-orange hover:bg-austin-orange hover:text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
-                  <IconUsers className="w-5 h-5 mr-2" />
-                  I&apos;m a Venue
-                  <IconArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+              </h1>
+              
+              <p className="text-lg md:text-xl text-gray-200 mb-12 leading-relaxed max-w-3xl mx-auto">
+                A simple platform for bands and venues to discover each other, manage availability, and book shows.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12">
+                <Link href="/signup?role=band">
+                  <Button variant="austin" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all">
+                    <IconMusic className="w-5 h-5 mr-2" />
+                    I&apos;m a Band
+                    <IconArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/signup?role=venue">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-6 border-austin-orange text-austin-orange hover:bg-austin-orange hover:text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <IconUsers className="w-5 h-5 mr-2" />
+                    I&apos;m a Venue
+                    <IconArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+              
+              {/* Prominent browse CTAs for anonymous users */}
+              <div className="flex items-center justify-center gap-4">
+                <Link href="/bands">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-6 py-4 border-white text-white hover:bg-white hover:text-austin-charcoal">
+                    Browse Bands
+                  </Button>
+                </Link>
+                <Link href="/venues">
+                  <Button variant="ghost" size="lg" className="w-full sm:w-auto text-lg px-6 py-4 text-white hover:bg-white/10">
+                    Browse Venues
+                  </Button>
+                </Link>
+              </div>
             </div>
-            {/* Prominent browse CTAs for anonymous users */}
-            <div className="flex items-center justify-center gap-4 mt-2 mb-16">
-              <Link href="/bands">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-6 py-4">
-                  Browse Bands
-                </Button>
-              </Link>
-              <Link href="/venues">
-                <Button variant="ghost" size="lg" className="w-full sm:w-auto text-lg px-6 py-4">
-                  Browse Venues
-                </Button>
-              </Link>
-            </div>
-
-            {/* Stats */}
-            {/* Neutral stats / trust removed for beta */}
           </div>
         </div>
       </section>

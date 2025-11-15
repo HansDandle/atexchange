@@ -14,27 +14,29 @@ export default async function VenuesPage({ searchParams }: Props) {
   let normalized: any[] = []
   try {
     console.log('Starting venue fetch...');
-    let query = supabase
+    // Fetch venue profiles directly without trying to join users
+    const { data: venueProfiles, error } = await supabase
       .from('venue_profiles')
-      .select(`
-        id,
-        venueName,
-        city,
-        state,
-        capacity,
-        photos,
-        user:users!venue_profiles_userId (id, email, name),
-        createdAt
-      `)
-
-    if (sort === 'name') query = query.order('venueName', { ascending: true })
-    else if (sort === 'city') query = query.order('city', { ascending: true })
-    else query = query.order('createdAt', { ascending: false })
-
-    const { data: venueProfiles, error } = await query
+      .select('id, venueName, city, state, capacity, photos, userId, createdAt')
+      .order(sort === 'name' ? 'venueName' : sort === 'city' ? 'city' : 'createdAt', { 
+        ascending: sort === 'name' || sort === 'city'
+      })
+    
     console.log('Venues fetched:', venueProfiles?.length, 'error:', error);
 
     if (error) throw error
+    
+    // Get all unique user IDs and fetch their data
+    const userIds = Array.from(new Set((venueProfiles || []).map(v => v.userId).filter(Boolean)))
+    const { data: users, error: usersError } = userIds.length > 0 
+      ? await supabase.from('users').select('id, email, name').in('id', userIds)
+      : { data: [], error: null }
+    
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+    }
+    
+    const usersById = (users || []).reduce((acc: any, u: any) => ({ ...acc, [u.id]: u }), {})
     
     // Fetch ratings for all venues
     console.log('Starting reviews fetch...');
@@ -67,53 +69,14 @@ export default async function VenuesPage({ searchParams }: Props) {
     
     normalized = (venueProfiles || []).map((v: any) => ({
       ...v,
-      user: Array.isArray(v.user) ? v.user[0] ?? null : v.user ?? null,
+      user: usersById[v.userId] ?? null,
       averageRating: getAverageRating(v.id),
       reviews: ratingsByVenue[v.id]?.reviews || [],
     }))
   } catch (err: any) {
-    console.log('Error in try block, using fallback:', err.message);
-    if (err.code === 'PGRST200' || (err.details && String(err.details).includes('no matches were found'))) {
-      const { data: profiles } = await supabase
-        .from('venue_profiles')
-        .select('id, venueName, city, state, capacity, photos, userId')
-
-      const ids = Array.from(new Set((profiles || []).map((p: any) => p.userId).filter(Boolean)))
-      const { data: users } = ids.length > 0 ? await supabase
-        .from('users')
-        .select('id, email, name')
-        .in('id', ids) : { data: [] }
-
-      const usersById = (users || []).reduce((acc: any, u: any) => ({ ...acc, [u.id]: u }), {})
-      
-      // Fetch reviews for ratings
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('id, venue_id, rating, body')
-      
-      const ratingsByVenue = (reviews || []).reduce((acc: any, r: any) => {
-        if (!acc[r.venue_id]) acc[r.venue_id] = { ratings: [], reviews: [] }
-        acc[r.venue_id].ratings.push(r.rating)
-        acc[r.venue_id].reviews.push({ body: r.body, rating: r.rating })
-        return acc
-      }, {})
-      
-      const getAverageRating = (venueId: string) => {
-        const ratings = ratingsByVenue[venueId]?.ratings || []
-        if (ratings.length === 0) return 0
-        const avg = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
-        return Math.round(avg * 2) / 2
-      }
-      
-      normalized = (profiles || []).map((p: any) => ({
-        ...p,
-        user: usersById[p.userId] ?? null,
-        averageRating: getAverageRating(p.id),
-        reviews: ratingsByVenue[p.id]?.reviews || [],
-      }))
-    } else {
-      throw err
-    }
+    console.log('Error fetching venues:', err.message);
+    // If we get an error, return empty array and let the page show "no venues"
+    normalized = []
   }
 
   return (
