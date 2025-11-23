@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar, Clock, Plus, Edit, Trash2, Users, CheckCircle, XCircle, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import IssueTicketsModal from './IssueTicketsModal'
 
 interface VenueProfile {
   id: string
@@ -513,6 +514,18 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                               >
                                 {previewLoading ? 'Loading...' : 'View Profile'}
                               </Button>
+                              {application.status === 'ACCEPTED' && (
+                                <IssueTicketsModal
+                                  applicationId={application.id}
+                                  bandId={application.band_profiles.id}
+                                  venueSlotId={selectedSlot?.id || ''}
+                                  bandName={application.band_profiles.bandName}
+                                  onSuccess={() => {
+                                    // Refresh applications
+                                    fetchApplications(selectedSlot?.id || '')
+                                  }}
+                                />
+                              )}
                             </div>
                             {application.status === 'PENDING' && (
                               <div className="flex space-x-2 ml-4">
