@@ -2,11 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { resolveDbUser, getProfilesForUser, getBandRecentActivity, getBandUpcomingGigs } from '@/lib/dashboard'
+import { resolveDbUser, getProfilesForUser, getBandRecentActivity, getBandUpcomingGigs, getVenueUpcomingEvents, getVenueRecentActivity } from '@/lib/dashboard'
 import ProfileSummary from '@/components/dashboard/ProfileSummary'
 import QuickActions from '@/components/dashboard/QuickActions'
 import RecentActivity from '@/components/dashboard/RecentActivity'
 import UpcomingGigs from '@/components/dashboard/UpcomingGigs'
+import VenueEvents from '@/components/dashboard/VenueEvents'
 import BandSelector from '@/components/dashboard/BandSelector'
 import Header from '@/components/Header';
 
@@ -31,9 +32,13 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
   let recentActivity: any[] = []
   let upcomingGigs: any[] = []
+  let venueEvents: any[] = []
   if (role === 'BAND' && profile?.id) {
     recentActivity = await getBandRecentActivity(supabase, profile.id)
     upcomingGigs = await getBandUpcomingGigs(supabase, profile.id)
+  } else if (role === 'VENUE' && profile?.id) {
+    recentActivity = await getVenueRecentActivity(supabase, profile.id)
+    venueEvents = await getVenueUpcomingEvents(supabase, profile.id)
   }
 
   const handleSignOut = async () => {
@@ -51,7 +56,15 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
           {profile ? (
             <>
               <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-2xl font-bold text-austin-charcoal mb-4">Welcome back, {profile.bandName ?? profile.venueName ?? profile.hostName ?? profile.djName ?? profile.photographerName ?? profile.creativeName ?? user.user_metadata?.name}!</h2>
+                <h2 className="text-2xl font-bold text-austin-charcoal mb-4">Welcome back, {
+                  role === 'BAND' ? profile.bandName :
+                  role === 'VENUE' ? profile.venueName :
+                  role === 'TRIVIA_HOST' ? profile.hostName :
+                  role === 'DJ' ? profile.djName :
+                  role === 'PHOTOGRAPHER' ? profile.name :
+                  role === 'OTHER_CREATIVE' ? profile.displayName :
+                  user.user_metadata?.name
+                }!</h2>
                 <p className="text-gray-600 mb-4">{role === 'BAND' ? 'Your band profile is complete. Start browsing available gigs!' : role === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' : 'Your profile is ready.'}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -61,7 +74,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
               <div className="grid grid-cols-1 gap-6">
                 <RecentActivity items={recentActivity} />
-                <UpcomingGigs gigs={upcomingGigs} role={role} />
+                {role === 'BAND' && <UpcomingGigs gigs={upcomingGigs} role={role} />}
+                {role === 'VENUE' && <VenueEvents events={venueEvents} />}
                 <ProfileSummary profile={profile} role={role} />
               </div>
             </>

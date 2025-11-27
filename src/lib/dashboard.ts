@@ -21,17 +21,21 @@ export async function resolveDbUser(supabase = createClient(), authUser: any) {
 export async function getProfilesForUser(supabase = createClient(), dbUser: any) {
   if (!dbUser) return { role: null, profiles: [] }
   const role = dbUser.role
-  const tableMap: Record<string, string> = {
-    BAND: 'band_profiles',
-    VENUE: 'venue_profiles',
-    TRIVIA_HOST: 'trivia_host_profiles',
-    DJ: 'dj_profiles',
-    PHOTOGRAPHER: 'photographer_profiles',
-    OTHER_CREATIVE: 'other_creative_profiles'
+  const tableMap: Record<string, { table: string, nameField: string }> = {
+    BAND: { table: 'band_profiles', nameField: 'bandName' },
+    VENUE: { table: 'venue_profiles', nameField: 'venueName' },
+    TRIVIA_HOST: { table: 'trivia_host_profiles', nameField: 'hostName' },
+    DJ: { table: 'dj_profiles', nameField: 'djName' },
+    PHOTOGRAPHER: { table: 'photographer_profiles', nameField: 'name' },
+    OTHER_CREATIVE: { table: 'other_creative_profiles', nameField: 'displayName' }
   }
-  const table = tableMap[role]
-  if (!table) return { role, profiles: [] }
-  const { data, error } = await supabase.from(table).select('*').eq('userId', dbUser.id)
+  const tableInfo = tableMap[role]
+  if (!tableInfo) return { role, profiles: [] }
+  // Always select id, slug, and the main name field for UI
+  const { data, error } = await supabase
+    .from(tableInfo.table)
+    .select(`*, slug, ${tableInfo.nameField}`)
+    .eq('userId', dbUser.id)
   if (error) console.error('getProfilesForUser error', error)
   return { role, profiles: data ?? [] }
 }
@@ -104,4 +108,98 @@ export async function getBandUpcomingGigs(supabase = createClient(), bandProfile
       venue_slots: normalizedVs
     }
   })
+}
+
+export async function getVenueUpcomingEvents(supabase = createClient(), venueProfileId: string) {
+  const today = new Date().toISOString().split('T')[0]
+  
+  // First fetch venue slots
+  const { data: slots, error: slotsError } = await supabase
+    .from('venue_slots')
+    .select('id, eventDate, startTime, eventTitle, venueProfileId')
+    .eq('venueProfileId', venueProfileId)
+    .gte('eventDate', today)
+    .order('eventDate', { ascending: true })
+    .limit(10)
+
+  if (slotsError) {
+    console.error('Error fetching venue slots:', slotsError)
+    return []
+  }
+
+  if (!slots || slots.length === 0) return []
+
+  // For each slot, fetch applications and tickets separately
+  const enrichedSlots = await Promise.all(slots.map(async (slot: any) => {
+    const { data: applications } = await supabase
+      .from('applications')
+      .select('id, status, bandProfileId, proposedFee, band_profiles:bandProfileId(bandName)')
+      .eq('venueSlotId', slot.id)
+
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('id, shareUrl, rsvpCount')
+      .eq('venueSlotId', slot.id)
+
+    const appsArray = Array.isArray(applications) ? applications : applications ? [applications] : []
+    const ticketsArray = Array.isArray(tickets) ? tickets : tickets ? [tickets] : []
+
+    return {
+      ...slot,
+      applications: appsArray.map((app: any) => ({
+        ...app,
+        bandProfile: Array.isArray(app.band_profiles) ? app.band_profiles[0] ?? null : app.band_profiles ?? null
+      })),
+      tickets: ticketsArray
+    }
+  }))
+
+  return enrichedSlots
+}
+
+export async function getVenueRecentActivity(supabase = createClient(), venueProfileId: string) {
+  // First get all venue slots for this venue
+  const { data: venueSlots } = await supabase
+    .from('venue_slots')
+    .select('id')
+    .eq('venueProfileId', venueProfileId)
+
+  if (!venueSlots || venueSlots.length === 0) return []
+
+  const slotIds = venueSlots.map(s => s.id)
+
+  // Then get applications for those slots
+  const { data: applications } = await supabase
+    .from('applications')
+    .select('id, status, createdAt, bandProfileId, venueSlotId')
+    .in('venueSlotId', slotIds)
+    .order('createdAt', { ascending: false })
+    .limit(5)
+
+  if (!applications || applications.length === 0) return []
+
+  // Enrich with band names and event titles
+  const enriched = await Promise.all(applications.map(async (app: any) => {
+    const { data: bandProfile } = await supabase
+      .from('band_profiles')
+      .select('bandName')
+      .eq('id', app.bandProfileId)
+      .single()
+
+    const { data: venueSlot } = await supabase
+      .from('venue_slots')
+      .select('eventTitle')
+      .eq('id', app.venueSlotId)
+      .single()
+
+    return {
+      type: 'application',
+      status: app.status,
+      bandName: bandProfile?.bandName ?? 'Unknown Band',
+      eventTitle: venueSlot?.eventTitle ?? 'TBD',
+      createdAt: app.createdAt
+    }
+  }))
+
+  return enriched
 }

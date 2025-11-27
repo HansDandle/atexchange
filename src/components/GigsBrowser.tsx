@@ -116,27 +116,26 @@ export default function GigsBrowser({ initialSlots }: GigsBrowserProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { data: dbUser } = await supabase
+      const { data: dbUserList } = await supabase
         .from('users')
         .select('id')
         .eq('supabaseId', user.id)
-        .single()
 
-      if (!dbUser) throw new Error('User not found')
+      if (!dbUserList || dbUserList.length === 0) throw new Error('User not found')
+      const dbUser = dbUserList[0]
 
       const { data: bandProfile } = await supabase
         .from('band_profiles')
         .select('id')
         .eq('userId', dbUser.id)
-        .single()
 
-      if (!bandProfile) throw new Error('Band profile not found')
+      if (!bandProfile || bandProfile.length === 0) throw new Error('Band profile not found')
 
       // Submit application
       const { error } = await supabase
         .from('applications')
         .insert({
-          bandProfileId: bandProfile.id,
+          bandProfileId: bandProfile[0].id,
           venueSlotId: selectedSlot.id,
           message: applicationMessage,
           proposedFee: proposedFee ? parseInt(proposedFee) * 100 : null, // Convert to cents

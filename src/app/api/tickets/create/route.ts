@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { nanoid } from 'nanoid'
+
+// Simple ID generator - replace nanoid
+function generateShareToken(length: number = 12): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +22,22 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // Get the user's database ID from their supabaseId
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('supabaseId', user.id)
+      .single()
+
+    if (userError || !userData) {
+      return NextResponse.json(
+        { error: 'User not found in database' },
+        { status: 401 }
+      )
+    }
+
+    const userId = userData.id
 
     const body = await request.json()
     const { bandId, venueSlotId, quantity } = body
@@ -32,26 +57,40 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the venue slot belongs to the current user
-    const { data: slot, error: slotError } = await supabase
+    const { data: slots, error: slotError } = await supabase
       .from('venue_slots')
-      .select('venueProfile:venue_profiles(userId)')
+      .select('id, venueProfileId')
       .eq('id', venueSlotId)
-      .single()
 
-    if (slotError || !slot) {
+    if (slotError || !slots || slots.length === 0) {
       return NextResponse.json(
         { error: 'Venue slot not found' },
         { status: 404 }
       )
     }
 
-    const venueProfile = Array.isArray(slot.venueProfile) 
-      ? slot.venueProfile[0] 
-      : slot.venueProfile
+    const slot = slots[0]
+    
+    // Get the venue profile to verify ownership
+    const { data: venueProfiles, error: venueError } = await supabase
+      .from('venue_profiles')
+      .select('userId')
+      .eq('id', slot.venueProfileId)
 
-    if (venueProfile?.userId !== user.id) {
+    if (venueError || !venueProfiles || venueProfiles.length === 0) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Venue profile not found' },
+        { status: 404 }
+      )
+    }
+
+    const venueProfile = venueProfiles[0]
+    
+    // Verify the user owns this venue
+    if (venueProfile.userId !== userId) {
+      console.error('Authorization failed:', { userId, venueUserId: venueProfile.userId, slotId: slot.id, bandId })
+      return NextResponse.json(
+        { error: 'Unauthorized - you do not own this venue' },
         { status: 403 }
       )
     }
@@ -62,9 +101,8 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('bandId', bandId)
       .eq('venueSlotId', venueSlotId)
-      .single()
 
-    if (existing) {
+    if (existing && existing.length > 0) {
       return NextResponse.json(
         { error: 'Tickets already exist for this band/show' },
         { status: 400 }
@@ -72,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique share URL
-    const shareToken = nanoid(12)
+    const shareToken = generateShareToken(12)
     const shareUrl = `/tickets/${shareToken}`
 
     // Create tickets

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from '@/lib/session-context';
 import { logout } from '@/app/actions/auth';
 
@@ -21,11 +22,12 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-white border-b">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-austin-charcoal">Austin Talent Exchange</h1>
-          </div>
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+            <Image src="/atxlogo.png" alt="Austin Talent Exchange" width={40} height={40} className="h-10 w-10" />
+            <h1 className="text-xl font-bold text-austin-charcoal">Austin Talent Exchange</h1>
+          </Link>
           <nav className="flex items-center space-x-4">
             <Link href="/dashboard" className="text-sm text-gray-600 hover:text-austin-orange">
               Dashboard

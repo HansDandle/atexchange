@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import Image from 'next/image'
 import Header from '@/components/Header'
 
 interface Props { searchParams?: { sort?: string } }
@@ -82,13 +83,29 @@ export default async function BandsPage({ searchParams }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {normalized.map((b: any) => (
-            <article key={b.id} className="bg-white rounded shadow p-4">
-              <h2 className="text-lg font-semibold">{b.bandName}</h2>
-              <p className="text-sm text-gray-600">{b.location ?? '—'}</p>
-              <p className="text-sm mt-2 text-gray-700">{(b.genre || []).slice(0,3).join(', ')}</p>
-              <div className="mt-4 flex items-center justify-between">
-                <Link href={`/profiles/${b.slug || b.id}`} className="text-austin-orange font-medium">View Profile</Link>
-                <span className="text-xs text-gray-500">Member: {b.user?.name ?? b.user?.email ?? '—'}</span>
+            <article key={b.id} className="bg-white rounded shadow p-0 overflow-hidden hover:shadow-lg transition">
+              {Array.isArray(b.photos) && b.photos.length > 0 ? (
+                <div className="relative h-40 w-full">
+                  <Image 
+                    src={b.photos[0]} 
+                    alt={`${b.bandName} photo`}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400">No photo</span>
+                </div>
+              )}
+              <div className="p-4">
+                <h2 className="text-lg font-semibold">{b.bandName}</h2>
+                <p className="text-sm text-gray-600">{b.location ?? '—'}</p>
+                <p className="text-sm mt-2 text-gray-700">{(b.genre || []).slice(0,3).join(', ')}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <Link href={`/profiles/${b.slug || b.id}`} className="text-austin-orange font-medium">View Profile</Link>
+                  <span className="text-xs text-gray-500">Member: {b.user?.name ?? b.user?.email ?? '—'}</span>
+                </div>
               </div>
             </article>
           ))}

@@ -59,6 +59,19 @@ CREATE POLICY "Allow authenticated users to read applications"
   TO authenticated 
   USING (true);
 
+-- Applications: Allow authenticated users to insert (submit applications)
+CREATE POLICY "Allow authenticated users to create applications" 
+  ON public.applications FOR INSERT 
+  TO authenticated 
+  WITH CHECK (true);
+
+-- Applications: Allow authenticated users to update (venues accepting/rejecting applications)
+CREATE POLICY "Allow authenticated users to update applications" 
+  ON public.applications FOR UPDATE 
+  TO authenticated 
+  USING (true)
+  WITH CHECK (true);
+
 -- Messages: Only allow users to read their own messages
 CREATE POLICY "Allow users to read their own messages" 
   ON public.messages FOR SELECT 
@@ -104,6 +117,32 @@ CREATE POLICY "Block direct updates - use backend API"
   ON public.users FOR UPDATE 
   TO anon, authenticated 
   USING (false);
+
+-- Tickets: Allow anyone to read (public access to ticket info)
+ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anyone to read tickets" 
+  ON public.tickets FOR SELECT 
+  TO anon, authenticated 
+  USING (true);
+
+-- Tickets: Allow authenticated users to create (venues creating tickets)
+CREATE POLICY "Allow authenticated users to create tickets" 
+  ON public.tickets FOR INSERT 
+  TO authenticated 
+  WITH CHECK (true);
+
+-- Ticket RSVPs: Allow anyone to read
+ALTER TABLE public.ticket_rsvps ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anyone to read ticket RSVPs" 
+  ON public.ticket_rsvps FOR SELECT 
+  TO anon, authenticated 
+  USING (true);
+
+-- Ticket RSVPs: Allow anyone to create (RSVP submission)
+CREATE POLICY "Allow anyone to create ticket RSVPs" 
+  ON public.ticket_rsvps FOR INSERT 
+  TO anon, authenticated 
+  WITH CHECK (true);
 
 CREATE POLICY "Block direct deletes - use backend API" 
   ON public.users FOR DELETE 

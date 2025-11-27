@@ -229,30 +229,59 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
     const supabase = createClient()
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('applications')
         .update({ status })
         .eq('id', applicationId)
+        .select()
 
       if (error) throw error
+      if (!data || data.length === 0) throw new Error('Failed to update application')
 
       // Update local state
       setApplications(applications.map(app => 
         app.id === applicationId ? { ...app, status } : app
       ))
 
-      // If accepted, update slot status to BOOKED
+      // If accepted, update slot status to BOOKED and keep other applications as PENDING backups
       if (status === 'ACCEPTED') {
         const application = applications.find(app => app.id === applicationId)
         if (application) {
-          await supabase
+          const { data: updatedSlots, error: slotError } = await supabase
             .from('venue_slots')
             .update({ status: 'BOOKED' })
             .eq('id', application.venueSlotId)
+            .select()
 
-          setSlots(slots.map(slot => 
-            slot.id === application.venueSlotId ? { ...slot, status: 'BOOKED' } : slot
-          ))
+          if (slotError) throw slotError
+          if (updatedSlots && updatedSlots.length > 0) {
+            setSlots(slots.map(slot => 
+              slot.id === application.venueSlotId ? { ...slot, status: 'BOOKED' } : slot
+            ))
+          }
+          
+          // Keep other applications as PENDING backup options (don't auto-reject)
+          // This allows you to have backups in case the accepted band cancels
+
+          // Send acceptance email to the band
+          try {
+            const bandEmail = application.band_profiles?.user?.email
+            const bandName = application.band_profiles?.bandName
+            const eventTitle = slots.find(s => s.id === application.venueSlotId)?.eventTitle || 'a venue slot'
+            if (bandEmail) {
+              await fetch('/api/notify-message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: bandEmail,
+                  subject: `Your application was accepted!`,
+                  text: `Congratulations${bandName ? ' ' + bandName : ''}! Your application for "${eventTitle}" has been accepted. Please log in for details.`,
+                })
+              })
+            }
+          } catch (emailErr) {
+            console.error('Failed to send acceptance email:', emailErr)
+          }
         }
       }
 
@@ -317,14 +346,14 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
             const pendingCount = slotApplications.filter(app => app.status === 'PENDING').length
             
             return (
-              <div key={slot.id} className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="flex items-start justify-between">
+              <div key={slot.id} className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 sm:gap-0">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <h3 className="text-xl font-semibold text-austin-charcoal">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                      <h3 className="text-lg sm:text-xl font-semibold text-austin-charcoal">
                         {slot.eventTitle || 'Untitled Event'}
                       </h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                         slot.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
                         slot.status === 'BOOKED' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
@@ -332,16 +361,16 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                         {slot.status}
                       </span>
                       {pendingCount > 0 && (
-                        <span className="px-2 py-1 bg-austin-orange/10 text-austin-orange rounded-full text-xs">
-                          {pendingCount} pending application{pendingCount !== 1 ? 's' : ''}
+                        <span className="px-2 py-1 bg-austin-orange/10 text-austin-orange rounded-full text-xs whitespace-nowrap">
+                          {pendingCount} pending
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center text-gray-600">
-                          <Calendar className="w-4 h-4 mr-2" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm sm:text-base text-gray-600">
+                          <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                           {formatDate(slot.eventDate)}
                         </div>
                         <div className="flex items-center text-gray-600">
@@ -371,7 +400,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-2 ml-6">
+                  <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mt-4 sm:mt-0 sm:ml-6 w-full sm:w-auto">
                     {slotApplications.length > 0 && (
                       <Button
                         variant="outline"
@@ -379,7 +408,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                         onClick={() => setViewingApplications(
                           viewingApplications === slot.id ? null : slot.id
                         )}
-                        className="flex items-center space-x-1"
+                        className="flex items-center justify-center space-x-1 w-full sm:w-auto"
                       >
                         <Users className="w-4 h-4" />
                         <span>Applications ({slotApplications.length})</span>
@@ -390,7 +419,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                       variant="outline"
                       size="sm"
                       onClick={() => startEditing(slot)}
-                      className="flex items-center space-x-1"
+                      className="flex items-center justify-center space-x-1 w-full sm:w-auto"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -399,7 +428,7 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteSlot(slot.id)}
-                      className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                      className="flex items-center justify-center space-x-1 text-red-600 hover:text-red-700 w-full sm:w-auto"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -417,11 +446,11 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                         <div key={application.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <h5 className="font-semibold text-austin-charcoal">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
+                                <h5 className="font-semibold text-austin-charcoal text-sm sm:text-base">
                                   {application.band_profiles.bandName}
                                 </h5>
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                                   application.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                                   application.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
                                   'bg-red-100 text-red-800'
@@ -514,18 +543,36 @@ export default function SlotsManager({ venueProfile, initialSlots, initialApplic
                               >
                                 {previewLoading ? 'Loading...' : 'View Profile'}
                               </Button>
-                              {application.status === 'ACCEPTED' && (
-                                <IssueTicketsModal
-                                  applicationId={application.id}
-                                  bandId={application.band_profiles.id}
-                                  venueSlotId={selectedSlot?.id || ''}
-                                  bandName={application.band_profiles.bandName}
-                                  onSuccess={() => {
-                                    // Refresh applications
-                                    fetchApplications(selectedSlot?.id || '')
-                                  }}
-                                />
-                              )}
+                              {application.status === 'ACCEPTED' && (() => {
+                                // Find ticket for this band/slot
+                                const ticket = (slot.tickets || []).find(
+                                  (t: any) => t.bandId === application.band_profiles.id
+                                );
+                                if (ticket && ticket.shareUrl) {
+                                  // Show view link button
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                                      onClick={() => window.open(`${window.location.origin}${ticket.shareUrl}`, '_blank')}
+                                    >
+                                      <span>View Ticket Link</span>
+                                    </Button>
+                                  );
+                                } else {
+                                  // Show issue tickets modal
+                                  return (
+                                    <IssueTicketsModal
+                                      applicationId={application.id}
+                                      bandId={application.band_profiles.id}
+                                      venueSlotId={slot.id}
+                                      bandName={application.band_profiles.bandName}
+                                      bandEmail={(application as any).band_profiles?.user?.email}
+                                    />
+                                  );
+                                }
+                              })()}
                             </div>
                             {application.status === 'PENDING' && (
                               <div className="flex space-x-2 ml-4">

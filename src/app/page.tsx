@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 // Inline SVG icons (replaced lucide-react)
@@ -54,16 +55,14 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-austin-light via-white to-austin-warm gradient-animation">
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-md border-b border-austin-orange/20 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-austin-orange rounded-lg flex items-center justify-center">
-                <IconMusic className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-austin-charcoal">
+            <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+              <Image src="/atxlogo.png" alt="Austin Talent Exchange" width={40} height={40} className="h-10 w-10" />
+              <h1 className="text-xl font-bold text-austin-charcoal">
                 Austin Talent Exchange
               </h1>
-            </div>
+            </Link>
             <div className="flex items-center space-x-4">
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-austin-charcoal hover:bg-austin-orange/10">
@@ -104,11 +103,11 @@ export default function Home() {
                 Austin — Beta Launch
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
                 Connect with local venues and musicians in Austin
               </h1>
               
-              <p className="text-lg md:text-xl text-gray-200 mb-12 leading-relaxed max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-12 leading-relaxed max-w-3xl mx-auto">
                 A simple platform for bands and venues to discover each other, manage availability, and book shows.
               </p>
               
@@ -130,11 +129,11 @@ export default function Home() {
               </div>
               
               {/* Prominent browse CTAs for anonymous users */}
-              <div className="flex items-center justify-center gap-8 text-white">
-                <Link href="/bands" className="text-lg font-medium hover:text-austin-orange transition-colors">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-white">
+                <Link href="/bands" className="text-base sm:text-lg font-medium hover:text-austin-orange transition-colors">
                   Browse Bands
                 </Link>
-                <Link href="/venues" className="text-lg font-medium hover:text-austin-orange transition-colors">
+                <Link href="/venues" className="text-base sm:text-lg font-medium hover:text-austin-orange transition-colors">
                   Browse Venues
                 </Link>
               </div>
@@ -147,24 +146,24 @@ export default function Home() {
       <section className="py-20 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-austin-charcoal mb-6">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-austin-charcoal mb-4 sm:mb-6">
                 Everything You Need to 
                 <span className="text-austin-orange"> Rock Austin</span>
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
                 Whether you&apos;re looking to book your next gig or find the perfect band, 
                 we&apos;ve got you covered.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="group bg-white rounded-2xl p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <div className="w-16 h-16 bg-gradient-to-br from-austin-orange to-austin-red rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation">
-                  <IconMusic className="w-8 h-8 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              <div className="group bg-white rounded-2xl p-6 sm:p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="w-14 sm:w-16 h-14 sm:h-16 bg-gradient-to-br from-austin-orange to-austin-red rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation">
+                  <IconMusic className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-semibold text-austin-charcoal mb-4">For Bands</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">
+                <h3 className="text-xl sm:text-2xl font-semibold text-austin-charcoal mb-4">For Bands</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed">
                   Create your Electronic Press Kit (EPK), showcase your sound with integrated Spotify/YouTube, 
                   set your availability, and apply to gigs across Austin with just a few clicks.
                 </p>
@@ -181,12 +180,12 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="group bg-white rounded-2xl p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <div className="w-16 h-16 bg-gradient-to-br from-austin-red to-austin-warm rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation" style={{ animationDelay: '0.5s' }}>
-                  <IconUsers className="w-8 h-8 text-white" />
+              <div className="group bg-white rounded-2xl p-6 sm:p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="w-14 sm:w-16 h-14 sm:h-16 bg-gradient-to-br from-austin-red to-austin-warm rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation" style={{ animationDelay: '0.5s' }}>
+                  <IconUsers className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-semibold text-austin-charcoal mb-4">For Venues</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">
+                <h3 className="text-xl sm:text-2xl font-semibold text-austin-charcoal mb-4">For Venues</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed">
                   Post available time slots, review band applications with audio previews, 
                   and book the perfect act for your space. Streamline your booking process.
                 </p>
@@ -203,12 +202,12 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="group bg-white rounded-2xl p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 md:col-span-2 lg:col-span-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-austin-warm to-austin-orange rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation" style={{ animationDelay: '1s' }}>
-                  <IconCalendar className="w-8 h-8 text-white" />
+              <div className="group bg-white rounded-2xl p-6 sm:p-8 border border-austin-orange/20 hover:border-austin-orange/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 md:col-span-2 lg:col-span-1">
+                <div className="w-14 sm:w-16 h-14 sm:h-16 bg-gradient-to-br from-austin-warm to-austin-orange rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform float-animation" style={{ animationDelay: '1s' }}>
+                  <IconCalendar className="w-7 sm:w-8 h-7 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-semibold text-austin-charcoal mb-4">Easy Booking</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">
+                <h3 className="text-xl sm:text-2xl font-semibold text-austin-charcoal mb-4">Easy Booking</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed">
                   Streamlined communication, transparent pricing, instant notifications, 
                   and secure booking confirmation. Get booked in minutes, not weeks.
                 </p>
@@ -248,13 +247,16 @@ export default function Home() {
                     <IconArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="w-full sm:w-auto text-lg px-8 py-6 border-white text-black hover:bg-white hover:text-austin-charcoal"
-                >
-                  Watch Demo
-                </Button>
+                <div data-tooltip="Coming Soon" className="relative">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full sm:w-auto text-lg px-8 py-6 border-white text-black hover:bg-white hover:text-austin-charcoal opacity-75 cursor-not-allowed"
+                    disabled
+                  >
+                    Watch Demo
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

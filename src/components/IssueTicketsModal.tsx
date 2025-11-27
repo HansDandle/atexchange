@@ -8,6 +8,7 @@ interface IssueTicketsProps {
   bandId: string
   venueSlotId: string
   bandName: string
+  bandEmail?: string
   onSuccess?: () => void
 }
 
@@ -16,6 +17,7 @@ export default function IssueTicketsModal({
   bandId,
   venueSlotId,
   bandName,
+  bandEmail,
   onSuccess,
 }: IssueTicketsProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -50,6 +52,23 @@ export default function IssueTicketsModal({
       const shareLink = `${window.location.origin}${data.ticket.shareUrl}`
       setTicketLink(shareLink)
       onSuccess?.()
+
+        // Send RSVP link to band by email
+        if (bandEmail) {
+          try {
+            await fetch('/api/notify-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: bandEmail,
+                subject: `Your RSVP Link for ${bandName}`,
+                text: `Here is your RSVP/ticket link: ${shareLink}`,
+              })
+            })
+          } catch (emailErr) {
+            console.error('Failed to send RSVP link email:', emailErr)
+          }
+        }
     } catch (err: any) {
       setError(err.message || 'An error occurred')
     } finally {
@@ -59,12 +78,12 @@ export default function IssueTicketsModal({
 
   if (ticketLink) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          <h2 className="text-2xl font-bold text-austin-charcoal mb-4">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 my-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-austin-charcoal mb-3 sm:mb-4">
             🎫 Tickets Created!
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
             {quantity} tickets issued for {bandName}. Share this link with the band:
           </p>
 
@@ -74,17 +93,17 @@ export default function IssueTicketsModal({
               type="text"
               value={ticketLink}
               readOnly
-              className="w-full px-2 py-2 text-sm font-mono bg-white border border-gray-300 rounded"
+              className="w-full px-2 py-2 text-xs sm:text-sm font-mono bg-white border border-gray-300 rounded"
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(ticketLink)
               }}
               variant="outline"
-              className="flex-1"
+              className="w-full"
             >
               Copy Link
             </Button>
@@ -94,7 +113,7 @@ export default function IssueTicketsModal({
                 setTicketLink(null)
               }}
               variant="austin"
-              className="flex-1"
+              className="w-full"
             >
               Done
             </Button>
@@ -116,14 +135,14 @@ export default function IssueTicketsModal({
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-austin-charcoal mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 my-auto">
+            <h2 className="text-xl sm:text-2xl font-bold text-austin-charcoal mb-3 sm:mb-4">
               Issue Tickets for {bandName}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
                 {error}
               </div>
             )}
@@ -138,25 +157,25 @@ export default function IssueTicketsModal({
                 max="10000"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-austin-orange focus:border-transparent text-base"
               />
               <p className="text-xs text-gray-600 mt-1">
                 The band can share a link to sell/distribute these tickets
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 onClick={() => setIsOpen(false)}
                 variant="outline"
-                className="flex-1"
+                className="w-full"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleIssueTickets}
                 variant="austin"
-                className="flex-1"
+                className="w-full"
                 disabled={loading}
               >
                 {loading ? 'Creating...' : 'Issue Tickets'}

@@ -17,7 +17,7 @@ export default async function VenuesPage({ searchParams }: Props) {
     // Fetch venue profiles directly without trying to join users
     const { data: venueProfiles, error } = await supabase
       .from('venue_profiles')
-      .select('id, venueName, city, state, capacity, photos, userId, createdAt')
+      .select('id, slug, venueName, city, state, capacity, photos, userId, createdAt')
       .order(sort === 'name' ? 'venueName' : sort === 'city' ? 'city' : 'createdAt', { 
         ascending: sort === 'name' || sort === 'city'
       })

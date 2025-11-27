@@ -2,11 +2,13 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 interface Venue {
   id: string
+  slug?: string
   venueName: string
   city?: string
   state?: string
@@ -136,30 +138,46 @@ export default function VenuesClient({ venues, sort }: VenuesClientProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVenues.map((v: Venue) => (
-              <article key={v.id} className="bg-white rounded shadow hover:shadow-lg transition p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-lg font-semibold text-gray-900">{v.venueName}</h2>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 4 }).map((_, i) => {
-                      const noteValue = i + 1
-                      const isFilled = v.averageRating >= noteValue
-                      const isHalf = !isFilled && v.averageRating > i && v.averageRating < noteValue
-                      return (
-                        <img
-                          key={i}
-                          src={isFilled ? '/wholenote.png' : isHalf ? '/halfnote.png' : '/halfnote.png'}
-                          alt={isFilled ? 'filled note' : 'empty note'}
-                          className="w-5 h-5 opacity-75"
-                        />
-                      )
-                    })}
+              <article key={v.id} className="bg-white rounded shadow hover:shadow-lg transition p-0 overflow-hidden">
+                {Array.isArray(v.photos) && v.photos.length > 0 ? (
+                  <div className="relative h-40 w-full">
+                    <Image 
+                      src={v.photos[0]} 
+                      alt={`${v.venueName} photo`}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                </div>
-                <p className="text-sm text-gray-600">{v.city ?? ''}{v.state ? `, ${v.state}` : ''}</p>
-                <p className="text-sm mt-2 text-gray-700">Capacity: {v.capacity ?? '—'}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <Link href={`/venues/${v.id}`} className="text-austin-orange font-medium hover:underline">View Profile</Link>
-                  <span className="text-xs text-gray-500">Owner: {v.user?.name ?? v.user?.email ?? '—'}</span>
+                ) : (
+                  <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400">No photo</span>
+                  </div>
+                )}
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-gray-900">{v.venueName}</h2>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 4 }).map((_, i) => {
+                        const noteValue = i + 1
+                        const isFilled = v.averageRating >= noteValue
+                        const isHalf = !isFilled && v.averageRating > i && v.averageRating < noteValue
+                        return (
+                          <img
+                            key={i}
+                            src={isFilled ? '/wholenote.png' : isHalf ? '/halfnote.png' : '/halfnote.png'}
+                            alt={isFilled ? 'filled note' : 'empty note'}
+                            className="w-5 h-5 opacity-75"
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">{v.city ?? ''}{v.state ? `, ${v.state}` : ''}</p>
+                  <p className="text-sm mt-2 text-gray-700">Capacity: {v.capacity ?? '—'}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <Link href={`/venues/${v.slug ? v.slug : v.id}`} className="text-austin-orange font-medium hover:underline">View Profile</Link>
+                    <span className="text-xs text-gray-500">Owner: {v.user?.name ?? v.user?.email ?? '—'}</span>
+                  </div>
                 </div>
               </article>
             ))}
