@@ -1,3 +1,13 @@
+// Union type for all possible profile shapes
+type Profile = {
+  id: string;
+  bandName?: string;
+  venueName?: string;
+  hostName?: string;
+  djName?: string;
+  name?: string;
+  displayName?: string;
+};
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -26,19 +36,26 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
 
   const { role, profiles } = await getProfilesForUser(supabase, resolvedDbUser)
   // Support multiple profiles per user. If bandId provided in query, pick that profile.
-  const profilesArray = Array.isArray(profiles) ? profiles : profiles ? [profiles] : []
+  // Type guard to exclude ParserError and ensure only valid profile objects
+  function isValidProfile(p: any): p is Profile {
+    return p && typeof p === 'object' && 'id' in p && !('issues' in p) && !('message' in p) && !('expected' in p);
+  }
+  const rawProfiles: any[] = Array.isArray(profiles) ? profiles : profiles ? [profiles] : [];
+  const profilesArray = rawProfiles.filter(isValidProfile) as unknown as Profile[];
   const requestedBandId = typeof searchParams?.bandId === 'string' ? searchParams?.bandId : undefined
-  const profile = requestedBandId ? profilesArray.find(p => String(p.id) === requestedBandId) ?? profilesArray[0] ?? null : profilesArray[0] ?? null
+  const profile: Profile | null = requestedBandId ? profilesArray.find(p => String(p.id) === requestedBandId) ?? profilesArray[0] ?? null : profilesArray[0] ?? null
 
   let recentActivity: any[] = []
   let upcomingGigs: any[] = []
   let venueEvents: any[] = []
-  if (role === 'BAND' && profile?.id) {
-    recentActivity = await getBandRecentActivity(supabase, profile.id)
-    upcomingGigs = await getBandUpcomingGigs(supabase, profile.id)
-  } else if (role === 'VENUE' && profile?.id) {
-    recentActivity = await getVenueRecentActivity(supabase, profile.id)
-    venueEvents = await getVenueUpcomingEvents(supabase, profile.id)
+  if (profile) {
+    if (role === 'BAND') {
+      recentActivity = await getBandRecentActivity(supabase, profile.id)
+      upcomingGigs = await getBandUpcomingGigs(supabase, profile.id)
+    } else if (role === 'VENUE') {
+      recentActivity = await getVenueRecentActivity(supabase, profile.id)
+      venueEvents = await getVenueUpcomingEvents(supabase, profile.id)
+    }
   }
 
   const handleSignOut = async () => {
@@ -57,12 +74,12 @@ export default async function DashboardPage({ searchParams }: { searchParams?: {
             <>
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h2 className="text-2xl font-bold text-austin-charcoal mb-4">Welcome back, {
-                  role === 'BAND' ? profile.bandName :
-                  role === 'VENUE' ? profile.venueName :
-                  role === 'TRIVIA_HOST' ? profile.hostName :
-                  role === 'DJ' ? profile.djName :
-                  role === 'PHOTOGRAPHER' ? profile.name :
-                  role === 'OTHER_CREATIVE' ? profile.displayName :
+                  role === 'BAND' && 'bandName' in profile ? profile.bandName :
+                  role === 'VENUE' && 'venueName' in profile ? profile.venueName :
+                  role === 'TRIVIA_HOST' && 'hostName' in profile ? profile.hostName :
+                  role === 'DJ' && 'djName' in profile ? profile.djName :
+                  role === 'PHOTOGRAPHER' && 'name' in profile ? profile.name :
+                  role === 'OTHER_CREATIVE' && 'displayName' in profile ? profile.displayName :
                   user.user_metadata?.name
                 }!</h2>
                 <p className="text-gray-600 mb-4">{role === 'BAND' ? 'Your band profile is complete. Start browsing available gigs!' : role === 'VENUE' ? 'Your venue profile is complete. Start posting available slots!' : 'Your profile is ready.'}</p>

@@ -25,6 +25,7 @@ interface VenueSlot {
   talentTypes: string[] | null
   status: string
   createdAt: string
+  tickets?: any[]
 }
 
 interface Application {
@@ -42,6 +43,10 @@ interface Application {
     minFee: number | null
     maxFee: number | null
     photos: string[] | null
+    user?: {
+      email?: string
+      [key: string]: any
+    }
   }
 }
 

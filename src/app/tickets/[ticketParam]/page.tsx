@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 export default function TicketRSVPPage() {
   const params = useParams()
-  const ticketParam = params.ticketParam as string
+  const ticketParam = params?.ticketParam as string
   
   const [ticket, setTicket] = useState<any>(null)
   const [loading, setLoading] = useState(true)
